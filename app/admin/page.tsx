@@ -1,0 +1,103 @@
+import Link from "next/link";
+import { Plus, FileText, Rss, Sparkles } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
+import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
+import { getAllArticlesAdmin } from "@/lib/articles/queries";
+import { getDraftStats } from "@/lib/drafts/queries";
+import { getSourceItemStats } from "@/lib/sources/queries";
+
+export default async function AdminDashboardPage() {
+  const configured = isSupabaseAdminConfigured();
+  const articles = configured ? await getAllArticlesAdmin() : [];
+  const published = articles.filter((a) => a.status === "published").length;
+  const drafts = articles.filter((a) => a.status === "draft").length;
+  const draftStats = configured ? await getDraftStats() : { pending: 0 };
+  const sourceStats = configured ? await getSourceItemStats() : { pending: 0 };
+
+  return (
+    <>
+      <PageHeader
+        title="Admin"
+        description="Manage GTA6Hub content — articles, guides and news."
+      />
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        {!configured && (
+          <p className="mb-8 rounded-lg border border-gta-pink/20 bg-gta-pink/5 px-4 py-3 text-sm text-gta-pink/80">
+            Add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local` to enable admin writes.
+          </p>
+        )}
+
+        <div className="mb-10 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <StatCard label="Total articles" value={articles.length} />
+          <StatCard label="Published" value={published} />
+          <StatCard label="Drafts" value={drafts} />
+          <StatCard label="AI drafts pending" value={draftStats.pending} />
+          <StatCard label="Sources pending" value={sourceStats.pending} />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <AdminLink
+            href="/admin/articles"
+            icon={<FileText className="size-5" />}
+            title="Articles"
+            description="View and manage all news and guides"
+          />
+          <AdminLink
+            href="/admin/articles/create"
+            icon={<Plus className="size-5" />}
+            title="Create article"
+            description="Write a new news post or guide"
+          />
+          <AdminLink
+            href="/admin/sources"
+            icon={<Rss className="size-5" />}
+            title="Sources"
+            description="Ingest content from external platforms"
+          />
+          <AdminLink
+            href="/admin/drafts"
+            icon={<Sparkles className="size-5" />}
+            title="AI Drafts"
+            description="Review and approve generated drafts"
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+      <p className="text-xs uppercase tracking-wider text-white/40">{label}</p>
+      <p className="mt-1 font-heading text-3xl font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function AdminLink({
+  href,
+  icon,
+  title,
+  description,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-start gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 transition-colors hover:border-white/12 hover:bg-white/[0.04]"
+    >
+      <span className="rounded-lg bg-white/5 p-2.5 text-white/60 group-hover:text-gta-pink">
+        {icon}
+      </span>
+      <div>
+        <p className="font-medium text-white">{title}</p>
+        <p className="mt-1 text-sm text-white/45">{description}</p>
+      </div>
+    </Link>
+  );
+}
