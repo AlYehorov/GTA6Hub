@@ -8,7 +8,7 @@ import { trackSearch } from "@/lib/analytics/track";
 
 export const metadata: Metadata = {
   title: "Search",
-  description: "Search GTA6Hub news, guides, characters, and vehicles.",
+  description: "Search GTA6Hub news, guides, characters, locations, vehicles, weapons, and animals.",
 };
 
 interface SearchPageProps {
@@ -30,7 +30,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     <>
       <PageHeader
         title="Search"
-        description="Find news, guides, characters, and vehicles across GTA6Hub."
+        description="Find news, guides, characters, locations, vehicles, and animals across GTA6Hub."
       />
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
         <Suspense fallback={null}>
@@ -90,11 +90,18 @@ function groupResults(results: Awaited<ReturnType<typeof searchAll>>) {
   const groups: Record<string, typeof results> = {
     news: [],
     guide: [],
+    location: [],
     character: [],
     vehicle: [],
+    weapon: [],
+    animal: [],
+    business: [],
+    mission: [],
+    collectible: [],
   };
 
   for (const r of results) {
+    if (!groups[r.type]) groups[r.type] = [];
     groups[r.type].push(r);
   }
 

@@ -17,6 +17,11 @@ const STATIC_ROUTES = [
   "/login",
   "/register",
   "/weapons",
+  "/locations",
+  "/animals",
+  "/businesses",
+  "/missions",
+  "/collectibles",
   "/checklist",
 ];
 
@@ -69,5 +74,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
-  return [...staticEntries, ...trackerEntries, ...articleEntries];
+  const entityTables = [
+    { table: "game_locations", prefix: "/locations" },
+    { table: "game_characters", prefix: "/characters" },
+    { table: "game_vehicles", prefix: "/vehicles" },
+    { table: "game_weapons", prefix: "/weapons" },
+    { table: "game_animals", prefix: "/animals" },
+    { table: "game_businesses", prefix: "/businesses" },
+    { table: "game_missions", prefix: "/missions" },
+    { table: "game_collectibles", prefix: "/collectibles" },
+  ] as const;
+
+  const entityEntries: MetadataRoute.Sitemap = [];
+  for (const { table, prefix } of entityTables) {
+    const { data } = await supabase
+      .from(table)
+      .select("slug, updated_at")
+      .eq("status", "published");
+    for (const row of data ?? []) {
+      entityEntries.push({
+        url: `${base}${prefix}/${row.slug}`,
+        lastModified: new Date(row.updated_at ?? now),
+        changeFrequency: "weekly",
+        priority: 0.75,
+      });
+    }
+  }
+
+  return [...staticEntries, ...trackerEntries, ...articleEntries, ...entityEntries];
 }

@@ -41,6 +41,23 @@ export async function trackArticleView(
 
 export async function trackSearch(query: string, resultCount: number): Promise<void> {
   await trackEvent("search", { query, result_count: resultCount });
+  await trackEvent("search_query", { query, result_count: resultCount });
+}
+
+export async function trackEntityView(entityKind: string, slug: string): Promise<void> {
+  await trackEvent("entity_view", { entity_kind: entityKind, slug });
+}
+
+export async function trackRelatedLinkClick(
+  sourceEntity: string,
+  targetHref: string,
+  linkType: string
+): Promise<void> {
+  await trackEvent("related_link_click", {
+    source_entity: sourceEntity,
+    target_href: targetHref,
+    link_type: linkType,
+  });
 }
 
 export async function trackDraftApproved(draftId: string, source: string): Promise<void> {

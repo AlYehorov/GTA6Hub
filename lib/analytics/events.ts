@@ -7,7 +7,10 @@ export type AnalyticsEventName =
   | "tracker_view"
   | "item_completed"
   | "category_completed"
-  | "overall_completion_updated";
+  | "overall_completion_updated"
+  | "entity_view"
+  | "search_query"
+  | "related_link_click";
 
 export interface ArticleViewPayload {
   article_id: string;
@@ -52,6 +55,22 @@ export interface OverallCompletionPayload {
   total_count: number;
 }
 
+export interface EntityViewPayload {
+  entity_kind: string;
+  slug: string;
+}
+
+export interface SearchQueryPayload {
+  query: string;
+  result_count: number;
+}
+
+export interface RelatedLinkClickPayload {
+  source_entity: string;
+  target_href: string;
+  link_type: string;
+}
+
 export type AnalyticsEventPayload =
   | ArticleViewPayload
   | SearchPayload
@@ -60,7 +79,10 @@ export type AnalyticsEventPayload =
   | TrackerViewPayload
   | ItemCompletedPayload
   | CategoryCompletedPayload
-  | OverallCompletionPayload;
+  | OverallCompletionPayload
+  | EntityViewPayload
+  | SearchQueryPayload
+  | RelatedLinkClickPayload;
 
 export interface AnalyticsEvent<T extends AnalyticsEventName = AnalyticsEventName> {
   event_name: T;

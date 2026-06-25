@@ -1,8 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { MOCK_CHARACTERS, MOCK_VEHICLES } from "@/lib/data/mock-content";
+import { entityHref } from "@/lib/entities/config";
+import { searchEntities } from "@/lib/entities/queries";
+import type { GameEntityKind } from "@/lib/types/game-entity";
 
-export type SearchResultType = "news" | "guide" | "character" | "vehicle";
+export type SearchResultType =
+  | "news"
+  | "guide"
+  | "character"
+  | "vehicle"
+  | "location"
+  | "weapon"
+  | "animal"
+  | "business"
+  | "mission"
+  | "collectible";
 
 export interface SearchResult {
   id: string;
@@ -12,17 +24,35 @@ export interface SearchResult {
   type: SearchResultType;
 }
 
+const ENTITY_KIND_TO_SEARCH_TYPE: Record<GameEntityKind, SearchResultType> = {
+  locations: "location",
+  characters: "character",
+  vehicles: "vehicle",
+  weapons: "weapon",
+  animals: "animal",
+  businesses: "business",
+  missions: "mission",
+  collectibles: "collectible",
+};
+
 export async function searchAll(query: string): Promise<SearchResult[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  const [articles, characters, vehicles] = await Promise.all([
+  const [articles, entities] = await Promise.all([
     searchArticles(trimmed),
-    searchCharacters(trimmed),
-    searchVehicles(trimmed),
+    searchEntities(trimmed, 5),
   ]);
 
-  return [...articles, ...characters, ...vehicles];
+  const entityResults: SearchResult[] = entities.map(({ kind, entity }) => ({
+    id: entity.id,
+    title: entity.title,
+    description: entity.description,
+    href: entityHref(kind, entity.slug),
+    type: ENTITY_KIND_TO_SEARCH_TYPE[kind],
+  }));
+
+  return [...articles, ...entityResults];
 }
 
 async function searchArticles(query: string): Promise<SearchResult[]> {
@@ -51,41 +81,15 @@ async function searchArticles(query: string): Promise<SearchResult[]> {
   }));
 }
 
-function searchCharacters(query: string): SearchResult[] {
-  const q = query.toLowerCase();
-  return MOCK_CHARACTERS.filter(
-    (c) =>
-      c.title.toLowerCase().includes(q) ||
-      (c.subtitle?.toLowerCase().includes(q) ?? false) ||
-      (c.tag?.toLowerCase().includes(q) ?? false)
-  ).map((c) => ({
-    id: c.id,
-    title: c.title,
-    description: c.subtitle ?? "",
-    href: c.href,
-    type: "character" as const,
-  }));
-}
-
-function searchVehicles(query: string): SearchResult[] {
-  const q = query.toLowerCase();
-  return MOCK_VEHICLES.filter(
-    (v) =>
-      v.title.toLowerCase().includes(q) ||
-      (v.subtitle?.toLowerCase().includes(q) ?? false) ||
-      (v.tag?.toLowerCase().includes(q) ?? false)
-  ).map((v) => ({
-    id: v.id,
-    title: v.title,
-    description: v.subtitle ?? "",
-    href: v.href,
-    type: "vehicle" as const,
-  }));
-}
-
 export const SEARCH_TYPE_LABELS: Record<SearchResultType, string> = {
   news: "News",
-  guide: "Guide",
-  character: "Character",
-  vehicle: "Vehicle",
+  guide: "Guides",
+  character: "Characters",
+  vehicle: "Vehicles",
+  location: "Locations",
+  weapon: "Weapons",
+  animal: "Animals",
+  business: "Businesses",
+  mission: "Missions",
+  collectible: "Collectibles",
 };

@@ -12,6 +12,7 @@
     "seed:map": "node scripts/seed-map.mjs",
     "seed:tracker": "node scripts/seed-tracker.mjs",
     "seed:achievements": "node scripts/seed-achievements.mjs",
+    "seed:entities": "node scripts/seed-entities.mjs",
     "validate:env": "node scripts/validate-env.mjs"
   },
   "dependencies": {
