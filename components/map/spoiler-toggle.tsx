@@ -10,7 +10,7 @@ interface SpoilerToggleProps {
 
 export function SpoilerToggle({ enabled, onChange, spoilerCount }: SpoilerToggleProps) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5">
+    <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5">
       <span className="text-sm text-white/70">Show spoilers</span>
       {spoilerCount > 0 && (
         <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">

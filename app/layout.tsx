@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteLayout } from "@/components/layout/site-layout";
 import { rootMetadata } from "@/lib/metadata";
@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = rootMetadata;
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,7 +33,7 @@ export default function RootLayout({
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-full min-h-screen-safe flex-col">
         <SiteLayout>{children}</SiteLayout>
       </body>
     </html>

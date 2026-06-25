@@ -26,7 +26,7 @@ export function MapFilters({
 }: MapFiltersProps) {
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="carousel-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
         {types.map((type) => {
           const active = activeTypes.has(type);
           return (
@@ -35,7 +35,7 @@ export function MapFilters({
               type="button"
               onClick={() => onToggleType(type)}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs transition-colors",
+                "shrink-0 rounded-full border px-3 py-2.5 text-sm transition-colors min-h-11 sm:py-1 sm:text-xs sm:min-h-0",
                 active
                   ? "border-white/20 bg-white/10 text-white"
                   : "border-white/10 text-white/40 hover:border-white/20 hover:text-white/60"
@@ -58,7 +58,7 @@ export function MapFilters({
             type="button"
             onClick={() => onDistrictChange(null)}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs",
+              "rounded-full border px-3 py-2.5 text-sm min-h-11 sm:py-1 sm:text-xs sm:min-h-0",
               activeDistrict === null
                 ? "border-gta-pink/40 bg-gta-pink/10 text-gta-pink"
                 : "border-white/10 text-white/40"
@@ -72,7 +72,7 @@ export function MapFilters({
               type="button"
               onClick={() => onDistrictChange(district)}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs",
+                "shrink-0 rounded-full border px-3 py-2.5 text-sm min-h-11 sm:py-1 sm:text-xs sm:min-h-0",
                 activeDistrict === district
                   ? "border-gta-pink/40 bg-gta-pink/10 text-gta-pink"
                   : "border-white/10 text-white/40 hover:text-white/60"

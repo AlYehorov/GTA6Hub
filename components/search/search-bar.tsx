@@ -41,8 +41,8 @@ export function SearchBar({ defaultValue = "", className, compact }: SearchBarPr
         defaultValue={value}
         placeholder={compact ? "Search..." : "Search news, guides, characters, vehicles..."}
         className={cn(
-          "w-full rounded-lg border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-gta-pink/40 focus:outline-none focus:ring-1 focus:ring-gta-pink/30",
-          compact ? "h-8 pl-8 pr-3 text-xs" : "h-10 pl-10 pr-4 text-sm"
+          "input-mobile w-full rounded-lg border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-gta-pink/40 focus:outline-none focus:ring-1 focus:ring-gta-pink/30",
+          compact ? "h-10 pl-8 pr-3" : "h-11 pl-10 pr-4"
         )}
       />
     </form>

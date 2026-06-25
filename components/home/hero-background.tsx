@@ -12,6 +12,14 @@ export function HeroBackground({ src, alt }: HeroBackgroundProps) {
   const [offset, setOffset] = useState(0);
 
   useEffect(() => {
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const narrow = window.matchMedia("(max-width: 768px)").matches;
+
+    if (prefersReduced || coarsePointer || narrow) {
+      return;
+    }
+
     function onScroll() {
       setOffset(window.scrollY * 0.35);
     }

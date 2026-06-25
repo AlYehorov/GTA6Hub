@@ -131,10 +131,16 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-clip;
+    -webkit-tap-highlight-color: transparent;
   }
   html {
-    @apply font-sans scroll-smooth;
+    @apply font-sans;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 }
 
@@ -168,6 +174,59 @@
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .carousel-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .h-screen-safe {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .min-h-touch {
+    min-height: 2.75rem;
+  }
+
+  .min-w-touch {
+    min-width: 2.75rem;
+  }
+
+  .input-mobile {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .input-mobile {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-up,
+    .animate-hero-zoom,
+    .section-reveal {
+      animation: none;
+    }
   }
 
   .carousel-scroll > * {

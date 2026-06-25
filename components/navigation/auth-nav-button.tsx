@@ -4,8 +4,15 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function AuthNavButton() {
+export function AuthNavButton({
+  mobile,
+  onNavigate,
+}: {
+  mobile?: boolean;
+  onNavigate?: () => void;
+} = {}) {
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,10 +47,14 @@ export function AuthNavButton() {
     return (
       <Link
         href={`/profile/${username}`}
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+        onClick={onNavigate}
+        className={cn(
+          "flex items-center gap-1.5 rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white",
+          mobile ? "min-h-11 px-3 py-3 text-base" : "px-2.5 py-1.5 text-sm"
+        )}
       >
         <User className="size-3.5" />
-        <span className="hidden sm:inline">{username}</span>
+        <span className={mobile ? "inline" : "hidden sm:inline"}>{username}</span>
       </Link>
     );
   }
@@ -51,7 +62,11 @@ export function AuthNavButton() {
   return (
     <Link
       href="/login"
-      className="rounded-lg px-2.5 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+      onClick={onNavigate}
+      className={cn(
+        "rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white",
+        mobile ? "flex min-h-11 items-center px-3 py-3 text-base" : "px-2.5 py-1.5 text-sm"
+      )}
     >
       Sign in
     </Link>

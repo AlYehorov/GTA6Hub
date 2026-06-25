@@ -21,15 +21,15 @@ export function MapPointDrawer({ point, spoilerMode, onClose }: MapPointDrawerPr
         <button
           type="button"
           aria-label="Close drawer"
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/70 lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
         className={cn(
-          "fixed z-50 flex flex-col border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl transition-transform duration-300",
-          "inset-x-0 bottom-0 max-h-[70vh] rounded-t-2xl border-t lg:inset-y-0 lg:right-0 lg:left-auto lg:w-96 lg:max-h-none lg:rounded-none lg:border-l lg:border-t-0",
+          "fixed z-50 flex flex-col border-white/10 bg-[#0a0a0a]/98 transition-transform duration-300 supports-[backdrop-filter]:bg-[#0a0a0a]/95 supports-[backdrop-filter]:backdrop-blur-xl",
+          "inset-x-0 bottom-0 max-h-[70vh] max-h-[70dvh] rounded-t-2xl border-t pb-safe lg:inset-y-0 lg:right-0 lg:left-auto lg:w-96 lg:max-h-none lg:rounded-none lg:border-l lg:border-t-0 lg:pb-0",
           point ? "translate-y-0 lg:translate-x-0" : "translate-y-full lg:translate-x-full"
         )}
       >
@@ -69,7 +69,7 @@ export function MapPointDrawer({ point, spoilerMode, onClose }: MapPointDrawerPr
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
+                className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-white/50 hover:bg-white/10 hover:text-white"
                 aria-label="Close"
               >
                 <X className="size-5" />

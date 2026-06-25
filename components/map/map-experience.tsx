@@ -62,7 +62,7 @@ export function MapExperience({ points }: MapExperienceProps) {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-black pt-16 lg:flex-row">
+    <div className="flex min-h-[calc(100vh-4rem)] min-h-[calc(100dvh-4rem)] flex-col bg-black pt-16 lg:flex-row">
       <div className="flex flex-1 flex-col p-4 sm:p-6 lg:pr-[26rem]">
         <header className="mb-4 sm:mb-6">
           <p className="text-xs uppercase tracking-[0.3em] text-gta-pink/80">Leonida</p>

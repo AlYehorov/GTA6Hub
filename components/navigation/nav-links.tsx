@@ -6,9 +6,10 @@ interface NavLinksProps {
   className?: string;
   onNavigate?: () => void;
   compact?: boolean;
+  mobile?: boolean;
 }
 
-export function NavLinks({ className, onNavigate, compact }: NavLinksProps) {
+export function NavLinks({ className, onNavigate, compact, mobile }: NavLinksProps) {
   return (
     <nav className={cn("flex items-center gap-0.5", className)}>
       {MAIN_NAV_ITEMS.map((item) => (
@@ -18,7 +19,11 @@ export function NavLinks({ className, onNavigate, compact }: NavLinksProps) {
           onClick={onNavigate}
           className={cn(
             "rounded-lg font-medium text-white/65 transition-colors hover:bg-white/10 hover:text-white",
-            compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"
+            compact
+              ? "px-2.5 py-1.5 text-xs"
+              : mobile
+                ? "flex min-h-11 items-center px-3 py-3 text-base"
+                : "px-3 py-2 text-sm"
           )}
         >
           {item.label}

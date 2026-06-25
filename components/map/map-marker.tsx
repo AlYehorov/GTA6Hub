@@ -22,7 +22,7 @@ export function MapMarker({ point, spoilerMode, selected, onSelect }: MapMarkerP
       type="button"
       aria-label={hidden ? "Spoiler location" : point.title}
       className={cn(
-        "absolute z-10 -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-gta-pink",
+        "absolute z-10 flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-gta-pink",
         selected && "z-20 scale-125"
       )}
       style={{ left: `${point.lng}%`, top: `${point.lat}%` }}
@@ -50,7 +50,7 @@ export function MapMarker({ point, spoilerMode, selected, onSelect }: MapMarkerP
         )}
       </span>
       {!hidden && (
-        <span className="pointer-events-none absolute left-1/2 top-full mt-1 hidden max-w-[120px] -translate-x-1/2 truncate rounded bg-black/80 px-1.5 py-0.5 text-[10px] text-white/80 sm:block">
+        <span className="pointer-events-none absolute left-1/2 top-full mt-1 max-w-[100px] -translate-x-1/2 truncate rounded bg-black/80 px-1.5 py-0.5 text-[10px] text-white/80 sm:max-w-[120px]">
           {point.title}
         </span>
       )}
