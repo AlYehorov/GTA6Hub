@@ -1,3 +1,5 @@
+import { CANONICAL_SITE_URL } from "@/lib/constants/site";
+
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 export async function fetchWithTimeout(
@@ -13,7 +15,7 @@ export async function fetchWithTimeout(
       ...init,
       signal: controller.signal,
       headers: {
-        "User-Agent": "GTA6Hub/1.0 (community news aggregator; +https://gta6hub.com)",
+        "User-Agent": `GTA6Hub/1.0 (community news aggregator; +${CANONICAL_SITE_URL})`,
         Accept: "application/json, application/xml, text/xml, */*",
         ...init?.headers,
       },

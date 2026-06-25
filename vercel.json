@@ -4,5 +4,19 @@
       "path": "/api/cron/ingest",
       "schedule": "0 12 * * *"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "gtavihub.gg" }],
+      "destination": "https://www.gtavihub.gg/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "gta6hub-five.vercel.app" }],
+      "destination": "https://www.gtavihub.gg/:path*",
+      "permanent": true
+    }
   ]
 }

@@ -125,11 +125,11 @@ Leaderboard page metadata targets progress tracker keywords.
 
 Add to **Redirect URLs**:
 ```
-https://gta6hub-five.vercel.app/auth/callback
+https://www.gtavihub.gg/auth/callback
 http://localhost:3000/auth/callback
 ```
 
-Set **Site URL**: `https://gta6hub-five.vercel.app`
+Set **Site URL**: `https://www.gtavihub.gg`
 
 ### Google
 

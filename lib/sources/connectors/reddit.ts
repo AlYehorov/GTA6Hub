@@ -1,6 +1,7 @@
 import type { SourceConnector } from "@/lib/sources/types";
 import type { SourceItemInput } from "@/lib/types/source";
 import { fetchWithTimeout, parseRssItems, stripHtml } from "@/lib/sources/fetch-utils";
+import { CANONICAL_SITE_URL } from "@/lib/constants/site";
 
 const SUBREDDIT = "GTA6";
 const DEFAULT_MIN_SCORE = 100;
@@ -97,7 +98,7 @@ export class RedditConnector implements SourceConnector {
     const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "application/json",
-        "User-Agent": "GTA6Hub/1.0 (community aggregator; +https://gta6hub.com)",
+        "User-Agent": `GTA6Hub/1.0 (community aggregator; +${CANONICAL_SITE_URL})`,
       },
     });
 
@@ -156,7 +157,7 @@ export class RedditConnector implements SourceConnector {
     const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "application/atom+xml, application/xml, text/xml, */*",
-        "User-Agent": "GTA6Hub/1.0 (community aggregator; +https://gta6hub.com)",
+        "User-Agent": `GTA6Hub/1.0 (community aggregator; +${CANONICAL_SITE_URL})`,
       },
     });
 
