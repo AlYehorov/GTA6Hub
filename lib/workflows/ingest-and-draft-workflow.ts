@@ -15,6 +15,43 @@ export interface WorkflowResult {
  * Never publishes — human review is mandatory.
  */
 export class IngestAndDraftWorkflow {
+  /** Production cron cycle: real connectors + all unprocessed items. */
+  async runFullCycle(): Promise<WorkflowResult> {
+    const result: WorkflowResult = {
+      ingested: 0,
+      skipped: 0,
+      draftsCreated: 0,
+      errors: [],
+    };
+
+    try {
+      const ingestion = await sourceIngestionService.ingestProductionConnectors();
+      result.ingested = ingestion.inserted;
+      result.skipped = ingestion.skipped;
+      result.errors.push(...ingestion.errors);
+
+      for (const source of ingestion.items) {
+        try {
+          await aiDraftService.createDraft(source);
+          await sourceIngestionService.markProcessed(source.id);
+          result.draftsCreated++;
+        } catch (err) {
+          result.errors.push(
+            err instanceof Error ? err.message : `Draft failed for ${source.id}`
+          );
+        }
+      }
+    } catch (err) {
+      result.errors.push(err instanceof Error ? err.message : "Ingestion failed");
+    }
+
+    const backlog = await this.processUnprocessedSources();
+    result.draftsCreated += backlog.draftsCreated;
+    result.errors.push(...backlog.errors);
+
+    return result;
+  }
+
   async runAll(): Promise<WorkflowResult> {
     return this.runIngestion(() => sourceIngestionService.ingestAllConnectors());
   }
@@ -63,6 +100,7 @@ export class IngestAndDraftWorkflow {
       const ingestion = await ingestFn();
       result.ingested = ingestion.inserted;
       result.skipped = ingestion.skipped;
+      result.errors.push(...ingestion.errors);
 
       for (const source of ingestion.items) {
         try {

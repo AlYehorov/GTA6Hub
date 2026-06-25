@@ -12,6 +12,10 @@ const STATIC_ROUTES = [
   "/vehicles",
   "/trailers",
   "/map",
+  "/tracker",
+  "/leaderboard",
+  "/login",
+  "/register",
   "/weapons",
   "/checklist",
 ];
@@ -46,5 +50,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticEntries, ...articleEntries];
+  const { data: categories } = await supabase
+    .from("completion_categories")
+    .select("slug, created_at");
+
+  const trackerEntries: MetadataRoute.Sitemap = [
+    {
+      url: `${base}/tracker`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    },
+    ...(categories ?? []).map((c) => ({
+      url: `${base}/tracker/${c.slug}`,
+      lastModified: new Date(c.created_at ?? now),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
+  ];
+
+  return [...staticEntries, ...trackerEntries, ...articleEntries];
 }

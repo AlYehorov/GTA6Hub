@@ -17,6 +17,7 @@ export interface EnvConfig {
   siteUrl: string;
   openAiApiKey?: string;
   aiProvider: "openai" | "mock";
+  cronSecret?: string;
 }
 
 function missing(name: string): string {
@@ -62,6 +63,12 @@ export function validateEnv(options?: {
   if (!openAi) {
     warnings.push(
       "OPENAI_API_KEY is not set — AI draft generation uses the mock provider (safe for production demo)."
+    );
+  }
+
+  if (!process.env.CRON_SECRET?.trim()) {
+    warnings.push(
+      "CRON_SECRET is not set — /api/cron/ingest will reject all requests until configured."
     );
   }
 
@@ -118,6 +125,7 @@ export function getEnvConfig(): EnvConfig {
     siteUrl: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
     openAiApiKey: openAi,
     aiProvider: openAi ? "openai" : "mock",
+    cronSecret: process.env.CRON_SECRET?.trim(),
   };
 }
 

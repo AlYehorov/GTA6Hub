@@ -61,6 +61,19 @@ function inferTags(source: SourceItem): string[] {
 }
 
 function inferConfidence(source: SourceItem): number {
+  switch (source.source_label) {
+    case "official":
+      return source.source === "reddit" ? 0.55 : 0.9;
+    case "community":
+      return 0.55;
+    case "rumor":
+      return 0.4;
+    case "unconfirmed":
+      return 0.5;
+    default:
+      break;
+  }
+
   switch (source.source) {
     case "rockstar_newswire":
       return 0.92;
@@ -87,10 +100,14 @@ function buildExcerpt(source: SourceItem, platformLabel: string): string {
 
 function buildContent(source: SourceItem, platformLabel: string): string {
   const slug = slugify(source.title);
+  const labelNote =
+    source.source_label === "official"
+      ? "official Rockstar channel"
+      : `${source.source_label} — verify against official channels`;
 
   return `# ${source.title}
 
-*Source: [${platformLabel}](${source.source_url})*
+*Source: [${platformLabel}](${source.source_url}) (${source.source_label})*
 
 ## Summary
 
@@ -102,7 +119,7 @@ This development adds to the growing picture of Leonida ahead of launch. Vice Ci
 
 ## Key Takeaways
 
-- Information sourced from **${platformLabel}** — verify against official channels
+- Information sourced from **${platformLabel}** (${labelNote})
 - GTA6Hub provides editorial coverage; we are not affiliated with Rockstar Games
 - More updates expected as Rockstar reveals additional material
 

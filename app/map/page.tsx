@@ -1,23 +1,16 @@
-import type { Metadata } from "next";
-import { PageHeader } from "@/components/shared/page-header";
+import { MapExperience } from "@/components/map/map-experience";
+import { createPageMetadata } from "@/lib/metadata";
+import { getPublishedMapPoints } from "@/lib/map/queries";
 
-export const metadata: Metadata = {
-  title: "Map",
-  description: "Interactive map of Leonida and Vice City.",
-};
+export const metadata = createPageMetadata({
+  title: "GTA 6 Interactive Map",
+  description:
+    "Explore locations, secrets, districts, vehicles, wildlife and easter eggs across Leonida and Vice City.",
+  path: "/map",
+});
 
-export default function MapPage() {
-  return (
-    <>
-      <PageHeader
-        title="Map"
-        description="Explore Leonida — Vice City, the Keys, and everything in between."
-      />
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <p className="text-muted-foreground">
-          Interactive map coming soon.
-        </p>
-      </div>
-    </>
-  );
+export default async function MapPage() {
+  const points = await getPublishedMapPoints();
+
+  return <MapExperience points={points} />;
 }

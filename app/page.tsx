@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/home/hero-section";
 import { NewsSection } from "@/components/home/news-section";
+import { TrackerSection } from "@/components/home/tracker-section";
+import { CommunitySection } from "@/components/home/community-section";
 import { ContentCarousel } from "@/components/home/content-carousel";
 import {
   MOCK_CHARACTERS,
@@ -24,6 +26,10 @@ export default function HomePage() {
 
       <div className="relative space-y-16 py-16 sm:space-y-24 sm:py-24">
         <NewsSection />
+
+        <TrackerSection />
+
+        <CommunitySection />
 
         <ContentCarousel
           title="Characters"

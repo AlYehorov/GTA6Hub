@@ -1,7 +1,14 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import type { AiDraftListItem, AiDraftWithSource } from "@/lib/types/ai-draft";
-import type { SourcePlatform } from "@/lib/types/source";
+import type { SourceLabel, SourcePlatform } from "@/lib/types/source";
+
+const STATUS_ORDER: Record<AiDraftListItem["status"], number> = {
+  pending: 0,
+  approved: 1,
+  rejected: 2,
+  published: 3,
+};
 
 export async function getAllDraftsAdmin(): Promise<AiDraftListItem[]> {
   if (!isSupabaseAdminConfigured()) return [];
@@ -11,22 +18,35 @@ export async function getAllDraftsAdmin(): Promise<AiDraftListItem[]> {
     .from("ai_drafts")
     .select(`
       id, title, confidence, status, created_at,
-      source_item:source_items(source)
+      source_item:source_items(source, source_url, source_label)
     `)
     .order("created_at", { ascending: false });
 
   if (error) return [];
 
-  return (data ?? []).map((row) => {
-    const sourceItem = row.source_item as unknown as { source: SourcePlatform } | null;
+  const drafts = (data ?? []).map((row) => {
+    const sourceItem = row.source_item as unknown as {
+      source: SourcePlatform;
+      source_url: string;
+      source_label: SourceLabel;
+    } | null;
+
     return {
       id: row.id as string,
       title: row.title as string,
       source: sourceItem?.source ?? "rockstar_newswire",
+      source_url: sourceItem?.source_url ?? "",
+      source_label: sourceItem?.source_label ?? "unconfirmed",
       confidence: Number(row.confidence),
       status: row.status as AiDraftListItem["status"],
       created_at: row.created_at as string,
     };
+  });
+
+  return drafts.sort((a, b) => {
+    const statusDiff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+    if (statusDiff !== 0) return statusDiff;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 }
 
@@ -38,7 +58,7 @@ export async function getDraftByIdAdmin(id: string): Promise<AiDraftWithSource |
     .from("ai_drafts")
     .select(`
       *,
-      source_item:source_items(id, source, source_type, source_url, title, published_at)
+      source_item:source_items(id, source, source_type, source_label, source_url, title, published_at)
     `)
     .eq("id", id)
     .single();

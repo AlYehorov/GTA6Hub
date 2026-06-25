@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { NavLinks } from "@/components/navigation/nav-links";
 import { MobileNav } from "@/components/navigation/mobile-nav";
+import { AuthNavButton } from "@/components/navigation/auth-nav-button";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -44,7 +45,9 @@ export function Navbar() {
         </Link>
 
         <NavLinks className="hidden md:flex" compact={scrolled} />
-        <Link
+        <div className="hidden items-center gap-1 md:flex">
+          <AuthNavButton />
+          <Link
           href="/search"
           aria-label="Search"
           className={cn(
@@ -54,6 +57,7 @@ export function Navbar() {
         >
           <Search className={scrolled ? "size-3.5" : "size-4"} />
         </Link>
+        </div>
         <MobileNav />
       </div>
     </header>

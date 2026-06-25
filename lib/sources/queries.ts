@@ -1,17 +1,34 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
-import type { SourceItem } from "@/lib/types/source";
+import type { SourceItem, SourcePlatform } from "@/lib/types/source";
 
-export async function getAllSourceItemsAdmin(limit = 100): Promise<SourceItem[]> {
+export interface SourceItemFilters {
+  source?: SourcePlatform;
+  processed?: boolean;
+  limit?: number;
+}
+
+export async function getAllSourceItemsAdmin(
+  filters: SourceItemFilters = {}
+): Promise<SourceItem[]> {
   if (!isSupabaseAdminConfigured()) return [];
 
   const supabase = createAdminClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("source_items")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(filters.limit ?? 100);
 
+  if (filters.source) {
+    query = query.eq("source", filters.source);
+  }
+
+  if (filters.processed !== undefined) {
+    query = query.eq("processed", filters.processed);
+  }
+
+  const { data, error } = await query;
   if (error) return [];
   return (data ?? []) as SourceItem[];
 }

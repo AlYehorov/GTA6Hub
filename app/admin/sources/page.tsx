@@ -1,24 +1,43 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { SourceIngestActions } from "@/components/admin/source-ingest-actions";
+import { SourceFilters } from "@/components/admin/source-filters";
 import { getAllSourceItemsAdmin, getSourceItemStats } from "@/lib/sources/queries";
 import { getConnectorPlatforms } from "@/lib/sources/registry";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { formatDate } from "@/lib/utils/format-date";
-import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
-import type { SourcePlatform } from "@/lib/types/source";
+import {
+  SOURCE_LABEL_STYLES,
+  SOURCE_PLATFORM_LABELS,
+} from "@/lib/types/source";
+import type { SourceLabel, SourcePlatform } from "@/lib/types/source";
 import { cn } from "@/lib/utils";
 
-export default async function AdminSourcesPage() {
+interface PageProps {
+  searchParams: Promise<{ source?: string; processed?: string }>;
+}
+
+export default async function AdminSourcesPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const sourceFilter = isSourcePlatform(params.source) ? params.source : undefined;
+  const processedFilter =
+    params.processed === "true" ? true : params.processed === "false" ? false : undefined;
+
   const configured = isSupabaseAdminConfigured();
   const [items, stats] = configured
-    ? await Promise.all([getAllSourceItemsAdmin(), getSourceItemStats()])
+    ? await Promise.all([
+        getAllSourceItemsAdmin({
+          source: sourceFilter,
+          processed: processedFilter,
+        }),
+        getSourceItemStats(),
+      ])
     : [[], { total: 0, processed: 0, pending: 0 }];
 
   return (
     <>
       <PageHeader
         title="Sources"
-        description="External content ingestion — mock connectors for now. AI drafts require human review."
+        description="Real ingestion from Rockstar Newswire, YouTube, and Reddit. AI drafts require human review."
       />
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {!configured && (
@@ -34,20 +53,28 @@ export default async function AdminSourcesPage() {
         </div>
 
         {configured && (
-          <div className="mb-10 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-            <p className="mb-4 text-sm text-white/50">
-              Ingest mock data from all connectors and generate AI drafts. Content is never auto-published.
-            </p>
-            <SourceIngestActions
-              pendingCount={stats.pending}
-              platforms={getConnectorPlatforms()}
+          <>
+            <div className="mb-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+              <p className="mb-4 text-sm text-white/50">
+                Ingest from live connectors and generate AI drafts. Content is never auto-published.
+                Production cron runs every 6 hours via `/api/cron/ingest`.
+              </p>
+              <SourceIngestActions
+                pendingCount={stats.pending}
+                platforms={getConnectorPlatforms()}
+              />
+            </div>
+
+            <SourceFilters
+              currentSource={sourceFilter}
+              currentProcessed={processedFilter}
             />
-          </div>
+          </>
         )}
 
         {items.length === 0 ? (
           <p className="py-12 text-center text-white/40">
-            No source items yet. Run ingestion to fetch mock data.
+            No source items match these filters. Run ingestion or adjust filters.
           </p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-white/[0.06]">
@@ -56,7 +83,7 @@ export default async function AdminSourcesPage() {
                 <tr>
                   <th className="px-4 py-3 font-medium">Title</th>
                   <th className="px-4 py-3 font-medium">Source</th>
-                  <th className="px-4 py-3 font-medium">Type</th>
+                  <th className="px-4 py-3 font-medium">Label</th>
                   <th className="hidden px-4 py-3 font-medium sm:table-cell">Status</th>
                   <th className="hidden px-4 py-3 font-medium md:table-cell">Ingested</th>
                 </tr>
@@ -77,7 +104,9 @@ export default async function AdminSourcesPage() {
                     <td className="px-4 py-3 text-white/50">
                       {SOURCE_PLATFORM_LABELS[item.source as SourcePlatform]}
                     </td>
-                    <td className="px-4 py-3 text-white/40">{item.source_type}</td>
+                    <td className="px-4 py-3">
+                      <SourceLabelBadge label={item.source_label} />
+                    </td>
                     <td className="hidden px-4 py-3 sm:table-cell">
                       <ProcessedBadge processed={item.processed} />
                     </td>
@@ -92,6 +121,15 @@ export default async function AdminSourcesPage() {
         )}
       </div>
     </>
+  );
+}
+
+function isSourcePlatform(value?: string): value is SourcePlatform {
+  return (
+    value === "rockstar_newswire" ||
+    value === "rockstar_youtube" ||
+    value === "reddit" ||
+    value === "x"
   );
 }
 
@@ -113,6 +151,15 @@ function ProcessedBadge({ processed }: { processed: boolean }) {
       )}
     >
       {processed ? "Processed" : "Pending"}
+    </span>
+  );
+}
+
+function SourceLabelBadge({ label }: { label: SourceLabel }) {
+  const style = SOURCE_LABEL_STYLES[label] ?? SOURCE_LABEL_STYLES.unconfirmed;
+  return (
+    <span className={cn("rounded-full px-2 py-0.5 text-xs capitalize", style.className)}>
+      {style.label}
     </span>
   );
 }

@@ -27,9 +27,12 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
           <DraftReviewActions draftId={draft.id} status={draft.status} />
         </div>
 
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid gap-4 sm:grid-cols-4">
           <MetaCard label="Source">
             {SOURCE_PLATFORM_LABELS[draft.source_item.source as SourcePlatform]}
+          </MetaCard>
+          <MetaCard label="Source label">
+            <span className="capitalize">{draft.source_item.source_label}</span>
           </MetaCard>
           <MetaCard label="Confidence">
             <span

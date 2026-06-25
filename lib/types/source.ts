@@ -4,10 +4,13 @@ export type SourcePlatform =
   | "reddit"
   | "x";
 
+export type SourceLabel = "official" | "community" | "rumor" | "unconfirmed";
+
 export interface SourceItem {
   id: string;
   source: SourcePlatform;
   source_type: string;
+  source_label: SourceLabel;
   source_url: string;
   external_id: string;
   title: string;
@@ -20,6 +23,7 @@ export interface SourceItem {
 export interface SourceItemInput {
   source: SourcePlatform;
   source_type: string;
+  source_label: SourceLabel;
   source_url: string;
   external_id: string;
   title: string;
@@ -35,3 +39,21 @@ export const SOURCE_PLATFORM_LABELS: Record<SourcePlatform, string> = {
   reddit: "Reddit",
   x: "X (Twitter)",
 };
+
+export const SOURCE_LABEL_STYLES: Record<
+  SourceLabel,
+  { label: string; className: string }
+> = {
+  official: { label: "Official", className: "bg-emerald-500/10 text-emerald-400" },
+  community: { label: "Community", className: "bg-blue-500/10 text-blue-400" },
+  rumor: { label: "Rumor", className: "bg-orange-500/10 text-orange-400" },
+  unconfirmed: { label: "Unconfirmed", className: "bg-amber-500/10 text-amber-400" },
+};
+
+/** Reddit-sourced content must never be marked official. */
+export function enforceSourceLabel(input: SourceItemInput): SourceLabel {
+  if (input.source === "reddit") {
+    return input.source_label === "official" ? "unconfirmed" : input.source_label;
+  }
+  return input.source_label;
+}

@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAllDraftsAdmin, getDraftStats } from "@/lib/drafts/queries";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { formatDate } from "@/lib/utils/format-date";
-import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
-import type { SourcePlatform } from "@/lib/types/source";
+import {
+  SOURCE_LABEL_STYLES,
+  SOURCE_PLATFORM_LABELS,
+} from "@/lib/types/source";
+import type { SourceLabel, SourcePlatform } from "@/lib/types/source";
 import type { AiDraftStatus } from "@/lib/types/ai-draft";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +22,7 @@ export default async function AdminDraftsPage() {
     <>
       <PageHeader
         title="AI Drafts"
-        description="Review AI-generated drafts before publishing. Human approval is required."
+        description="Review AI-generated drafts before publishing. Pending drafts appear first."
       />
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {!configured && (
@@ -49,6 +53,8 @@ export default async function AdminDraftsPage() {
                 <tr>
                   <th className="px-4 py-3 font-medium">Title</th>
                   <th className="px-4 py-3 font-medium">Source</th>
+                  <th className="hidden px-4 py-3 font-medium lg:table-cell">Source link</th>
+                  <th className="px-4 py-3 font-medium">Label</th>
                   <th className="px-4 py-3 font-medium">Confidence</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="hidden px-4 py-3 font-medium sm:table-cell">Created</th>
@@ -61,6 +67,24 @@ export default async function AdminDraftsPage() {
                     <td className="px-4 py-3 font-medium text-white">{draft.title}</td>
                     <td className="px-4 py-3 text-white/50">
                       {SOURCE_PLATFORM_LABELS[draft.source as SourcePlatform]}
+                    </td>
+                    <td className="hidden max-w-[200px] truncate px-4 py-3 lg:table-cell">
+                      {draft.source_url ? (
+                        <a
+                          href={draft.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-white/40 hover:text-gta-pink"
+                        >
+                          <span className="truncate">View source</span>
+                          <ExternalLink className="size-3 shrink-0" />
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <SourceLabelBadge label={draft.source_label} />
                     </td>
                     <td className="px-4 py-3">
                       <ConfidenceBadge value={draft.confidence} />
@@ -118,6 +142,15 @@ function StatusBadge({ status }: { status: AiDraftStatus }) {
   return (
     <span className={cn("rounded-full px-2 py-0.5 text-xs capitalize", styles[status])}>
       {status}
+    </span>
+  );
+}
+
+function SourceLabelBadge({ label }: { label: SourceLabel }) {
+  const style = SOURCE_LABEL_STYLES[label] ?? SOURCE_LABEL_STYLES.unconfirmed;
+  return (
+    <span className={cn("rounded-full px-2 py-0.5 text-xs capitalize", style.className)}>
+      {style.label}
     </span>
   );
 }

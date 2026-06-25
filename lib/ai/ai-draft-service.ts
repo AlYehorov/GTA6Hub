@@ -4,21 +4,28 @@ import type { SourceItem } from "@/lib/types/source";
 import type { AiDraft, AiGeneratedArticle } from "@/lib/types/ai-draft";
 import { generateMockDraft } from "@/lib/ai/providers/mock-provider";
 import {
-  ARTICLE_DRAFT_SYSTEM_PROMPT,
-  buildArticleDraftUserPrompt,
-} from "@/lib/ai/prompts/article-draft";
+  generateOpenAiDraft,
+  isOpenAiConfigured,
+} from "@/lib/ai/providers/openai-provider";
 
 export class AIDraftService {
   /**
    * Generates an AI draft from source material.
-   * Uses mock provider by default; never auto-publishes.
+   * Uses OpenAI when OPENAI_API_KEY is set; falls back to mock in local dev.
+   * Never auto-publishes.
    */
   async generateFromSource(source: SourceItem): Promise<AiGeneratedArticle> {
-    // Prompt templates ready for external LLM integration
-    void ARTICLE_DRAFT_SYSTEM_PROMPT;
-    void buildArticleDraftUserPrompt(source);
+    if (isOpenAiConfigured()) {
+      try {
+        return await generateOpenAiDraft(source);
+      } catch (err) {
+        console.warn(
+          "[AIDraftService] OpenAI failed, falling back to mock:",
+          err instanceof Error ? err.message : err
+        );
+      }
+    }
 
-    // TODO: swap to OpenAI/Anthropic when OPENAI_API_KEY is configured
     return generateMockDraft(source);
   }
 

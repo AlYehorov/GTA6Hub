@@ -1,3 +1,5 @@
+"use server";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import type {
@@ -60,5 +62,45 @@ export async function trackDraftPublished(
     source,
     article_id: articleId,
     slug,
+  });
+}
+
+export async function trackTrackerView(categorySlug?: string): Promise<void> {
+  await trackEvent("tracker_view", { category_slug: categorySlug });
+}
+
+export async function trackItemCompleted(
+  itemId: string,
+  categoryId: string,
+  categorySlug: string
+): Promise<void> {
+  await trackEvent("item_completed", {
+    item_id: itemId,
+    category_id: categoryId,
+    category_slug: categorySlug,
+  });
+}
+
+export async function trackCategoryCompleted(
+  categoryId: string,
+  categorySlug: string,
+  percentage: number
+): Promise<void> {
+  await trackEvent("category_completed", {
+    category_id: categoryId,
+    category_slug: categorySlug,
+    percentage,
+  });
+}
+
+export async function trackOverallCompletionUpdated(
+  percentage: number,
+  completedCount: number,
+  totalCount: number
+): Promise<void> {
+  await trackEvent("overall_completion_updated", {
+    percentage,
+    completed_count: completedCount,
+    total_count: totalCount,
   });
 }

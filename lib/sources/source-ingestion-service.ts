@@ -2,25 +2,59 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import type { SourceConnector } from "@/lib/sources/types";
 import type { SourceItem, SourceItemInput } from "@/lib/types/source";
-import { getAllConnectors } from "@/lib/sources/registry";
+import { enforceSourceLabel } from "@/lib/types/source";
+import { getAllConnectors, getProductionConnectors } from "@/lib/sources/registry";
+import { hashString } from "@/lib/sources/fetch-utils";
 
 export interface IngestionResult {
   inserted: number;
   skipped: number;
   items: SourceItem[];
+  errors: string[];
 }
 
 export class SourceIngestionService {
   async ingestFromConnector(connector: SourceConnector): Promise<IngestionResult> {
-    const inputs = await connector.fetchItems();
-    return this.ingestItems(inputs);
+    try {
+      const inputs = await connector.fetchItems();
+      return this.ingestItems(inputs);
+    } catch (err) {
+      return {
+        inserted: 0,
+        skipped: 0,
+        items: [],
+        errors: [
+          `${connector.platform}: ${err instanceof Error ? err.message : "fetch failed"}`,
+        ],
+      };
+    }
   }
 
   async ingestAllConnectors(): Promise<IngestionResult> {
-    const allInputs = await Promise.all(
-      getAllConnectors().map((c) => c.fetchItems())
-    );
-    return this.ingestItems(allInputs.flat());
+    return this.ingestFromMultiple(getAllConnectors());
+  }
+
+  async ingestProductionConnectors(): Promise<IngestionResult> {
+    return this.ingestFromMultiple(getProductionConnectors());
+  }
+
+  private async ingestFromMultiple(connectors: SourceConnector[]): Promise<IngestionResult> {
+    const merged: IngestionResult = {
+      inserted: 0,
+      skipped: 0,
+      items: [],
+      errors: [],
+    };
+
+    for (const connector of connectors) {
+      const result = await this.ingestFromConnector(connector);
+      merged.inserted += result.inserted;
+      merged.skipped += result.skipped;
+      merged.items.push(...result.items);
+      merged.errors.push(...result.errors);
+    }
+
+    return merged;
   }
 
   async ingestItems(inputs: SourceItemInput[]): Promise<IngestionResult> {
@@ -33,15 +67,32 @@ export class SourceIngestionService {
     let inserted = 0;
     let skipped = 0;
 
-    for (const input of inputs) {
-      const { data: existing } = await supabase
+    for (const raw of inputs) {
+      const input: SourceItemInput = {
+        ...raw,
+        source_label: enforceSourceLabel(raw),
+        external_id: raw.external_id || hashString(raw.source_url),
+      };
+
+      const { data: byExternalId } = await supabase
         .from("source_items")
         .select("id")
         .eq("source", input.source)
         .eq("external_id", input.external_id)
         .maybeSingle();
 
-      if (existing) {
+      if (byExternalId) {
+        skipped++;
+        continue;
+      }
+
+      const { data: byUrl } = await supabase
+        .from("source_items")
+        .select("id")
+        .eq("source_url", input.source_url)
+        .maybeSingle();
+
+      if (byUrl) {
         skipped++;
         continue;
       }
@@ -51,6 +102,7 @@ export class SourceIngestionService {
         .insert({
           source: input.source,
           source_type: input.source_type,
+          source_label: input.source_label,
           source_url: input.source_url,
           external_id: input.external_id,
           title: input.title,
@@ -66,7 +118,7 @@ export class SourceIngestionService {
       inserted++;
     }
 
-    return { inserted, skipped, items };
+    return { inserted, skipped, items, errors: [] };
   }
 
   async getUnprocessedItems(limit = 50): Promise<SourceItem[]> {

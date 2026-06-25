@@ -9,6 +9,9 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "seed": "node scripts/seed-supabase.mjs",
+    "seed:map": "node scripts/seed-map.mjs",
+    "seed:tracker": "node scripts/seed-tracker.mjs",
+    "seed:achievements": "node scripts/seed-achievements.mjs",
     "validate:env": "node scripts/validate-env.mjs"
   },
   "dependencies": {

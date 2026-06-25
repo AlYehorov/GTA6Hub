@@ -7,6 +7,7 @@ export const MOCK_SOURCE_ITEMS: SourceItemInput[] = [
   {
     source: "rockstar_newswire",
     source_type: "newswire_post",
+    source_label: "official",
     source_url: "https://www.rockstargames.com/newswire/article/mock-trailer3-tease",
     external_id: "mock-rsnw-trailer3-tease",
     title: "Grand Theft Auto VI — Trailer 3 Coming This Fall",
@@ -17,6 +18,7 @@ export const MOCK_SOURCE_ITEMS: SourceItemInput[] = [
   {
     source: "rockstar_youtube",
     source_type: "youtube_video",
+    source_label: "official",
     source_url: "https://www.youtube.com/watch?v=mock-gta6-trailer2",
     external_id: "mock-yt-trailer2",
     title: "Grand Theft Auto VI Trailer 2",
@@ -26,7 +28,8 @@ export const MOCK_SOURCE_ITEMS: SourceItemInput[] = [
   },
   {
     source: "reddit",
-    source_type: "reddit_post",
+    source_type: "community",
+    source_label: "unconfirmed",
     source_url: "https://www.reddit.com/r/GTA6/comments/mock-vice-city-map",
     external_id: "mock-reddit-vice-city-map",
     title: "Fans compile Vice City map from trailer 2 screenshots",
@@ -37,6 +40,7 @@ export const MOCK_SOURCE_ITEMS: SourceItemInput[] = [
   {
     source: "x",
     source_type: "tweet",
+    source_label: "official",
     source_url: "https://x.com/RockstarGames/status/mock-gta6-launch-window",
     external_id: "mock-x-launch-window",
     title: "Rockstar Games on X: Fall 2025 launch window reaffirmed",

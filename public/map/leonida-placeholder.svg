@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Stylized Leonida map placeholder">
+  <defs>
+    <linearGradient id="ocean" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#061018"/>
+    </linearGradient>
+    <linearGradient id="land" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a3a2a"/>
+      <stop offset="50%" stop-color="#142e22"/>
+      <stop offset="100%" stop-color="#0f2418"/>
+    </linearGradient>
+    <linearGradient id="city" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a3545"/>
+      <stop offset="100%" stop-color="#1a2030"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff6b9d" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ff6b9d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <!-- Ocean -->
+  <rect width="1200" height="800" fill="url(#ocean)"/>
+
+  <!-- Main peninsula / Leonida landmass (abstract, not game-accurate) -->
+  <path fill="url(#land)" d="M80,120 C200,40 420,30 620,80 C820,130 980,200 1050,340 C1100,440 1080,560 980,640 C860,730 620,780 380,760 C200,745 90,620 70,480 C55,340 40,200 80,120 Z" opacity="0.95"/>
+
+  <!-- Wetlands / west -->
+  <ellipse cx="220" cy="520" rx="140" ry="90" fill="#1e4a32" opacity="0.55"/>
+
+  <!-- Northern region -->
+  <path fill="#183828" opacity="0.7" d="M120,180 C260,120 400,100 520,140 C480,220 360,280 220,260 C160,250 110,220 120,180 Z"/>
+
+  <!-- Vice City urban zone (stylized grid) -->
+  <path fill="url(#city)" d="M620,380 C720,340 860,360 920,440 C960,500 940,580 860,620 C760,670 640,660 580,580 C540,520 560,420 620,380 Z" opacity="0.85"/>
+  <g stroke="#3d4f68" stroke-width="1.5" opacity="0.35">
+    <line x1="620" y1="420" x2="900" y2="420"/>
+    <line x1="640" y1="480" x2="880" y2="480"/>
+    <line x1="660" y1="540" x2="860" y2="540"/>
+    <line x1="680" y1="380" x2="680" y2="600"/>
+    <line x1="760" y1="370" x2="760" y2="610"/>
+    <line x1="840" y1="390" x2="840" y2="590"/>
+  </g>
+
+  <!-- Keys / southern islands -->
+  <ellipse cx="900" cy="700" rx="55" ry="35" fill="#1a4030" opacity="0.8"/>
+  <ellipse cx="980" cy="660" rx="40" ry="28" fill="#1a4030" opacity="0.75"/>
+  <ellipse cx="850" cy="740" rx="35" ry="22" fill="#1a4030" opacity="0.7"/>
+
+  <!-- Mount Kalaga hint -->
+  <path fill="#2a3a30" opacity="0.6" d="M160,200 L220,120 L280,200 Z"/>
+
+  <!-- Neon glow over city -->
+  <ellipse cx="760" cy="500" rx="180" ry="120" fill="url(#glow)"/>
+
+  <!-- Grid overlay -->
+  <g stroke="#ffffff" stroke-width="0.5" opacity="0.04">
+    <path d="M0 200 H1200 M0 400 H1200 M0 600 H1200"/>
+    <path d="M200 0 V800 M400 0 V800 M600 0 V800 M800 0 V800 M1000 0 V800"/>
+  </g>
+
+  <!-- Label -->
+  <text x="600" y="770" text-anchor="middle" fill="#ffffff" opacity="0.2" font-family="system-ui,sans-serif" font-size="14" letter-spacing="4">LEONIDA  PLACEHOLDER MAP</text>
+</svg>

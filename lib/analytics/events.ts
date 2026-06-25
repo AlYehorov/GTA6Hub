@@ -3,7 +3,11 @@ export type AnalyticsEventName =
   | "search"
   | "draft_approved"
   | "draft_rejected"
-  | "draft_published";
+  | "draft_published"
+  | "tracker_view"
+  | "item_completed"
+  | "category_completed"
+  | "overall_completion_updated";
 
 export interface ArticleViewPayload {
   article_id: string;
@@ -26,11 +30,37 @@ export interface DraftPublishedPayload extends DraftActionPayload {
   slug: string;
 }
 
+export interface TrackerViewPayload {
+  category_slug?: string;
+}
+
+export interface ItemCompletedPayload {
+  item_id: string;
+  category_id: string;
+  category_slug: string;
+}
+
+export interface CategoryCompletedPayload {
+  category_id: string;
+  category_slug: string;
+  percentage: number;
+}
+
+export interface OverallCompletionPayload {
+  percentage: number;
+  completed_count: number;
+  total_count: number;
+}
+
 export type AnalyticsEventPayload =
   | ArticleViewPayload
   | SearchPayload
   | DraftActionPayload
-  | DraftPublishedPayload;
+  | DraftPublishedPayload
+  | TrackerViewPayload
+  | ItemCompletedPayload
+  | CategoryCompletedPayload
+  | OverallCompletionPayload;
 
 export interface AnalyticsEvent<T extends AnalyticsEventName = AnalyticsEventName> {
   event_name: T;

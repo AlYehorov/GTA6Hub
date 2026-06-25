@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Plus, FileText, Rss, Sparkles } from "lucide-react";
+import { Plus, FileText, Rss, Sparkles, MapPin, Trophy } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { getAllArticlesAdmin } from "@/lib/articles/queries";
 import { getDraftStats } from "@/lib/drafts/queries";
 import { getSourceItemStats } from "@/lib/sources/queries";
+import { getMapPointStats } from "@/lib/map/queries";
+import { getTrackerPublicTotals } from "@/lib/tracker/queries";
 
 export default async function AdminDashboardPage() {
   const configured = isSupabaseAdminConfigured();
@@ -13,6 +15,8 @@ export default async function AdminDashboardPage() {
   const drafts = articles.filter((a) => a.status === "draft").length;
   const draftStats = configured ? await getDraftStats() : { pending: 0 };
   const sourceStats = configured ? await getSourceItemStats() : { pending: 0 };
+  const mapStats = configured ? await getMapPointStats() : { published: 0 };
+  const trackerTotals = configured ? await getTrackerPublicTotals() : { totalItems: 0, categoryCount: 0 };
 
   return (
     <>
@@ -59,6 +63,18 @@ export default async function AdminDashboardPage() {
             icon={<Sparkles className="size-5" />}
             title="AI Drafts"
             description="Review and approve generated drafts"
+          />
+          <AdminLink
+            href="/admin/map"
+            icon={<MapPin className="size-5" />}
+            title="Map"
+            description={`Manage map points (${mapStats.published} published)`}
+          />
+          <AdminLink
+            href="/admin/tracker"
+            icon={<Trophy className="size-5" />}
+            title="Completion Tracker"
+            description={`Manage tracker items (${trackerTotals.totalItems} published)`}
           />
         </div>
       </div>

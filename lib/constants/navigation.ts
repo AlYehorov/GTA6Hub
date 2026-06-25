@@ -6,6 +6,8 @@ export const MAIN_NAV_ITEMS = [
   { label: "Characters", href: "/characters" },
   { label: "Vehicles", href: "/vehicles" },
   { label: "Map", href: "/map" },
+  { label: "Tracker", href: "/tracker" },
+  { label: "Leaderboard", href: "/leaderboard" },
 ] as const;
 
 export const FEATURED_ITEMS = [

@@ -4,20 +4,23 @@ import { ArticleHero } from "@/components/articles/article-hero";
 import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleTags } from "@/components/articles/article-tags";
 import { RelatedArticles } from "@/components/articles/related-articles";
+import { getRelatedMapPointsForArticle } from "@/lib/map/queries";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/articles/queries";
 import type { ArticleType } from "@/lib/types/article";
+import type { ArticleRelatedContent } from "@/lib/types/related-content";
 import { absoluteUrl, DEFAULT_OG_IMAGE } from "@/lib/constants/site";
 
 async function getArticlePageData(slug: string, type: ArticleType) {
   const article = await getArticleBySlug(slug, type);
   if (!article) notFound();
 
-  const related = await getRelatedArticles(
-    article.id,
-    type,
-    article.category_id,
-    3
-  );
+  const [related, mapPoints] = await Promise.all([
+    getRelatedArticles(article.id, type, article.category_id, 3),
+    getRelatedMapPointsForArticle(article.id),
+  ]);
+
+  const relatedContent: ArticleRelatedContent = { mapPoints };
+  void relatedContent;
 
   return { article, related };
 }

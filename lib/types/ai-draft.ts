@@ -1,4 +1,4 @@
-import type { SourcePlatform } from "@/lib/types/source";
+import type { SourcePlatform, SourceLabel } from "@/lib/types/source";
 
 export type AiDraftStatus = "pending" | "approved" | "rejected" | "published";
 
@@ -22,6 +22,8 @@ export interface AiDraftListItem {
   id: string;
   title: string;
   source: SourcePlatform;
+  source_url: string;
+  source_label: SourceLabel;
   confidence: number;
   status: AiDraftStatus;
   created_at: string;
@@ -32,6 +34,7 @@ export interface AiDraftWithSource extends AiDraft {
     id: string;
     source: SourcePlatform;
     source_type: string;
+    source_label: SourceLabel;
     source_url: string;
     title: string;
     published_at: string | null;
