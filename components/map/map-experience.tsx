@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapCanvas } from "@/components/map/map-canvas";
 import { MapFilters } from "@/components/map/map-filters";
 import { MapSearch } from "@/components/map/map-search";
 import { MapPointDrawer } from "@/components/map/map-point-drawer";
 import { SpoilerToggle } from "@/components/map/spoiler-toggle";
+import { getSavedLocationIds } from "@/lib/actions/saved-content";
 import type { MapPoint, MapPointType } from "@/lib/types/map-point";
 import { MAP_POINT_TYPE_LABELS } from "@/lib/types/map-point";
 
@@ -21,6 +22,11 @@ export function MapExperience({ points }: MapExperienceProps) {
   const [activeTypes, setActiveTypes] = useState<Set<MapPointType>>(new Set(ALL_TYPES));
   const [activeDistrict, setActiveDistrict] = useState<string | null>(null);
   const [selected, setSelected] = useState<MapPoint | null>(null);
+  const [savedLocationIds, setSavedLocationIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    void getSavedLocationIds().then((ids) => setSavedLocationIds(new Set(ids)));
+  }, [selected?.id]);
 
   const districts = useMemo(
     () =>
@@ -109,6 +115,7 @@ export function MapExperience({ points }: MapExperienceProps) {
         point={selected}
         spoilerMode={spoilerMode}
         onClose={() => setSelected(null)}
+        locationSaved={selected ? savedLocationIds.has(selected.id) : false}
       />
     </div>
   );

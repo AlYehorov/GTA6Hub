@@ -1,13 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/supabase/config";
+import { getLevelLabel } from "@/lib/profile/xp";
 import type {
   Achievement,
+  ActivityEvent,
   CommunityStats,
   LeaderboardData,
   LeaderboardEntry,
   Profile,
   ProfileWithStats,
+  SavedArticle,
+  SavedLocation,
   UserAchievement,
 } from "@/lib/types/profile";
 
@@ -15,7 +19,11 @@ function rowToProfile(row: Record<string, unknown>): Profile {
   return {
     id: row.id as string,
     username: row.username as string,
+    display_name: (row.display_name as string | null) ?? null,
     avatar_url: (row.avatar_url as string | null) ?? null,
+    bio: (row.bio as string | null) ?? null,
+    xp: Number(row.xp ?? 0),
+    level: Number(row.level ?? 1),
     favorite_category_id: (row.favorite_category_id as string | null) ?? null,
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
@@ -29,6 +37,7 @@ function rowToAchievement(row: Record<string, unknown>): Achievement {
     title: row.title as string,
     description: row.description as string,
     icon: row.icon as string,
+    xp_reward: Number(row.xp_reward ?? 0),
     sort_order: Number(row.sort_order),
     created_at: row.created_at as string,
   };
@@ -75,10 +84,18 @@ async function getUserProgressStats(userId: string): Promise<{
   total: number;
   percentage: number;
   collectibles_found: number;
+  categories_completed: number;
   categoryCompletions: Map<string, { slug: string; completed: number; total: number }>;
 }> {
   if (!isSupabaseConfigured()) {
-    return { completed: 0, total: 0, percentage: 0, collectibles_found: 0, categoryCompletions: new Map() };
+    return {
+      completed: 0,
+      total: 0,
+      percentage: 0,
+      collectibles_found: 0,
+      categoryCompletions: new Map(),
+      categories_completed: 0,
+    };
   }
 
   const supabase = await createClient();
@@ -99,10 +116,12 @@ async function getUserProgressStats(userId: string): Promise<{
   ).length;
 
   const categoryCompletions = new Map<string, { slug: string; completed: number; total: number }>();
+  let categoriesCompleted = 0;
   for (const [catId, slug] of categories) {
     const catItems = items.filter((i) => i.category_id === catId);
     const catCompleted = catItems.filter((i) => completedIds.has(i.id as string)).length;
     categoryCompletions.set(catId, { slug, completed: catCompleted, total: catItems.length });
+    if (catItems.length > 0 && catCompleted >= catItems.length) categoriesCompleted++;
   }
 
   const total = items.length;
@@ -114,6 +133,7 @@ async function getUserProgressStats(userId: string): Promise<{
     percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
     collectibles_found: collectiblesFound,
     categoryCompletions,
+    categories_completed: categoriesCompleted,
   };
 }
 
@@ -176,7 +196,9 @@ export async function getProfileWithStats(username: string): Promise<ProfileWith
     collectibles_found: stats.collectibles_found,
     total_items: stats.total,
     completed_items: stats.completed,
+    categories_completed: stats.categories_completed,
     favorite_category: favoriteCategory,
+    level_label: getLevelLabel(profile.level),
   };
 }
 
@@ -424,4 +446,110 @@ export async function getAllAchievements(): Promise<Achievement[]> {
     .order("sort_order", { ascending: true });
 
   return (data ?? []).map(rowToAchievement);
+}
+
+export async function getSavedArticles(userId: string, limit = 12): Promise<SavedArticle[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("saved_articles")
+    .select("id, article_id, created_at, article:articles(title, slug, type, excerpt, hero_image_url)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? [])
+    .map((row) => {
+      const article = row.article as unknown as Record<string, unknown> | null;
+      if (!article) return null;
+      return {
+        id: row.id as string,
+        article_id: row.article_id as string,
+        created_at: row.created_at as string,
+        title: article.title as string,
+        slug: article.slug as string,
+        type: article.type as string,
+        excerpt: (article.excerpt as string | null) ?? null,
+        hero_image_url: (article.hero_image_url as string | null) ?? null,
+      };
+    })
+    .filter(Boolean) as SavedArticle[];
+}
+
+export async function getSavedLocations(userId: string, limit = 12): Promise<SavedLocation[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("saved_locations")
+    .select("id, map_point_id, created_at, point:map_points(title, slug, type, district)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? [])
+    .map((row) => {
+      const point = row.point as unknown as Record<string, unknown> | null;
+      if (!point) return null;
+      return {
+        id: row.id as string,
+        map_point_id: row.map_point_id as string,
+        created_at: row.created_at as string,
+        title: point.title as string,
+        slug: point.slug as string,
+        type: point.type as string,
+        district: (point.district as string | null) ?? null,
+      };
+    })
+    .filter(Boolean) as SavedLocation[];
+}
+
+export async function getActivityEvents(userId: string, limit = 10): Promise<ActivityEvent[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("activity_events")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    user_id: row.user_id as string,
+    type: row.type as string,
+    title: row.title as string,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    created_at: row.created_at as string,
+  }));
+}
+
+export async function isArticleSaved(userId: string, articleId: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("saved_articles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("article_id", articleId)
+    .maybeSingle();
+
+  return !!data;
+}
+
+export async function isLocationSaved(userId: string, mapPointId: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("saved_locations")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("map_point_id", mapPointId)
+    .maybeSingle();
+
+  return !!data;
 }

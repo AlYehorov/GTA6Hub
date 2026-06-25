@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { isUsernameAvailable } from "@/lib/profile/queries";
-import { evaluateAndUnlockAchievements } from "@/lib/profile/achievements";
+import { evaluateAndUnlockAchievements, unlockAchievementBySlug } from "@/lib/profile/achievements";
+import { trackActivity } from "@/lib/profile/activity";
+import { awardXP, XP_REWARDS } from "@/lib/profile/xp";
 import { syncLocalProgressToServer } from "@/lib/actions/tracker-progress";
 import { getSiteUrl } from "@/lib/constants/site";
 
@@ -62,6 +64,12 @@ export async function signUpWithEmail(
   if (profileError) {
     return { success: false, error: profileError.message };
   }
+
+  await awardXP(data.user.id, XP_REWARDS.profile_created, "profile_created");
+  await trackActivity(data.user.id, "profile_created", "Created GTAVIHub profile", {
+    username: username.trim(),
+  });
+  await unlockAchievementBySlug(data.user.id, "first_login");
 
   return { success: true };
 }
@@ -136,12 +144,12 @@ export async function signOut(): Promise<void> {
   redirect("/");
 }
 
-export async function ensureProfileForUser(userId: string, email?: string | null) {
-  if (!isSupabaseConfigured()) return;
+export async function ensureProfileForUser(userId: string, email?: string | null): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
 
   const admin = createAdminClient();
   const { data: existing } = await admin.from("profiles").select("id").eq("id", userId).maybeSingle();
-  if (existing) return;
+  if (existing) return false;
 
   const base = email?.split("@")[0]?.replace(/[^a-zA-Z0-9_]/g, "_") || "player";
   let username = base.slice(0, 20);
@@ -153,6 +161,9 @@ export async function ensureProfileForUser(userId: string, email?: string | null
   }
 
   await admin.from("profiles").insert({ id: userId, username });
+  await awardXP(userId, XP_REWARDS.profile_created, "profile_created");
+  await trackActivity(userId, "profile_created", "Created GTAVIHub profile", { username });
+  return true;
 }
 
 export async function postLoginSync(localItemIds: string[]): Promise<void> {
@@ -167,8 +178,10 @@ export async function postLoginSync(localItemIds: string[]): Promise<void> {
   if (localItemIds.length > 0) {
     await syncLocalProgressToServer(localItemIds);
   }
+  await unlockAchievementBySlug(user.id, "first_login");
   await evaluateAndUnlockAchievements(user.id);
   revalidatePath("/tracker");
   revalidatePath("/profile");
+  revalidatePath("/u");
   revalidatePath("/leaderboard");
 }

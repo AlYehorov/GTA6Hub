@@ -53,7 +53,7 @@ export default async function LeaderboardPage() {
                 >
                   <div>
                     <Link
-                      href={`/profile/${entry.username}`}
+                      href={`/u/${entry.username}`}
                       className="font-medium text-white hover:text-gta-pink"
                     >
                       @{entry.username}
@@ -102,7 +102,7 @@ function LeaderboardCard({
               rank={i + 1}
               username={entry.username}
               value={entry.label}
-              href={`/profile/${entry.username}`}
+              href={`/u/${entry.username}`}
             />
           ))}
         </ul>

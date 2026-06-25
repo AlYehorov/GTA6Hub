@@ -49,7 +49,7 @@ export async function CommunitySection() {
               <ul className="space-y-2">
                 {stats.latest_achievements.slice(0, 3).map((a, i) => (
                   <li key={`${a.username}-${i}`} className="text-sm text-white/60">
-                    <Link href={`/profile/${a.username}`} className="text-white hover:text-gta-pink">
+                    <Link href={`/u/${a.username}`} className="text-white hover:text-gta-pink">
                       @{a.username}
                     </Link>{" "}
                     — {a.achievement_title}

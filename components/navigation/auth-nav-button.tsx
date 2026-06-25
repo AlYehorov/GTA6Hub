@@ -46,7 +46,7 @@ export function AuthNavButton({
   if (username) {
     return (
       <Link
-        href={`/profile/${username}`}
+        href="/profile"
         onClick={onNavigate}
         className={cn(
           "flex items-center gap-1.5 rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white",

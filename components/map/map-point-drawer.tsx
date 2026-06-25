@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink, X, BadgeCheck, EyeOff } from "lucide-react";
+import { SaveLocationButton } from "@/components/profile/save-location-button";
 import { cn } from "@/lib/utils";
 import type { MapPoint } from "@/lib/types/map-point";
 import { MAP_POINT_TYPE_LABELS } from "@/lib/types/map-point";
@@ -10,9 +11,10 @@ interface MapPointDrawerProps {
   point: MapPoint | null;
   spoilerMode: boolean;
   onClose: () => void;
+  locationSaved?: boolean;
 }
 
-export function MapPointDrawer({ point, spoilerMode, onClose }: MapPointDrawerProps) {
+export function MapPointDrawer({ point, spoilerMode, onClose, locationSaved }: MapPointDrawerProps) {
   const hidden = point?.spoiler && !spoilerMode;
 
   return (
@@ -97,6 +99,12 @@ export function MapPointDrawer({ point, spoilerMode, onClose }: MapPointDrawerPr
                   View source
                   <ExternalLink className="size-3.5" />
                 </a>
+              )}
+
+              {!hidden && (
+                <div className="mt-4">
+                  <SaveLocationButton mapPointId={point.id} initialSaved={locationSaved} />
+                </div>
               )}
             </div>
           </>

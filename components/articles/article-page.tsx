@@ -4,6 +4,10 @@ import { ArticleHero } from "@/components/articles/article-hero";
 import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleTags } from "@/components/articles/article-tags";
 import { RelatedArticles } from "@/components/articles/related-articles";
+import { SaveArticleButton } from "@/components/profile/save-article-button";
+import { ArticleReadTracker } from "@/components/profile/article-read-tracker";
+import { getAuthenticatedUserId } from "@/lib/actions/tracker-progress";
+import { isArticleSaved } from "@/lib/profile/queries";
 import { getRelatedMapPointsForArticle } from "@/lib/map/queries";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/articles/queries";
 import type { ArticleType } from "@/lib/types/article";
@@ -60,10 +64,16 @@ export async function generateArticleMetadata(
 
 export async function ArticlePage({ slug, type }: { slug: string; type: ArticleType }) {
   const { article, related } = await getArticlePageData(slug, type);
+  const userId = await getAuthenticatedUserId();
+  const saved = userId ? await isArticleSaved(userId, article.id) : false;
 
   return (
     <div className="bg-black pt-16">
+      <ArticleReadTracker articleId={article.id} />
       <ArticleHero article={article} />
+      <div className="mx-auto max-w-3xl px-4 pb-4 sm:px-6">
+        <SaveArticleButton articleId={article.id} initialSaved={saved} />
+      </div>
       <ArticleContent content={article.content} />
       <ArticleTags tags={article.tags} />
       <RelatedArticles articles={related} type={type} />

@@ -1,7 +1,11 @@
 export interface Profile {
   id: string;
   username: string;
+  display_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
+  xp: number;
+  level: number;
   favorite_category_id: string | null;
   created_at: string;
   updated_at: string;
@@ -13,11 +17,13 @@ export interface ProfileWithStats extends Profile {
   collectibles_found: number;
   total_items: number;
   completed_items: number;
+  categories_completed: number;
   favorite_category: {
     id: string;
     slug: string;
     title: string;
   } | null;
+  level_label: string;
 }
 
 export interface Achievement {
@@ -26,6 +32,7 @@ export interface Achievement {
   title: string;
   description: string;
   icon: string;
+  xp_reward: number;
   sort_order: number;
   created_at: string;
 }
@@ -36,6 +43,36 @@ export interface UserAchievement {
   achievement_id: string;
   unlocked_at: string;
   achievement?: Achievement;
+}
+
+export interface SavedArticle {
+  id: string;
+  article_id: string;
+  created_at: string;
+  title: string;
+  slug: string;
+  type: string;
+  excerpt: string | null;
+  hero_image_url: string | null;
+}
+
+export interface SavedLocation {
+  id: string;
+  map_point_id: string;
+  created_at: string;
+  title: string;
+  slug: string;
+  type: string;
+  district: string | null;
+}
+
+export interface ActivityEvent {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
 }
 
 export interface ProfileRegisterData {

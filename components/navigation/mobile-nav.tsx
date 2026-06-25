@@ -12,7 +12,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { NavLinks } from "@/components/navigation/nav-links";
-import { AuthNavButton } from "@/components/navigation/auth-nav-button";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -48,7 +47,13 @@ export function MobileNav() {
             mobile
             onNavigate={() => setOpen(false)}
           />
-          <AuthNavButton mobile onNavigate={() => setOpen(false)} />
+          <Link
+            href="/profile"
+            onClick={() => setOpen(false)}
+            className="flex min-h-11 items-center rounded-lg px-3 py-3 text-base font-medium text-white/65 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            Profile
+          </Link>
           <Link
             href="/search"
             onClick={() => setOpen(false)}

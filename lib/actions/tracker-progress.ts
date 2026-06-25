@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { evaluateAndUnlockAchievements } from "@/lib/profile/achievements";
+import { trackActivity } from "@/lib/profile/activity";
+import { awardXP, XP_REWARDS } from "@/lib/profile/xp";
 import { revalidatePath } from "next/cache";
 
 export interface ProgressActionResult {
@@ -62,6 +64,20 @@ export async function setItemProgress(
       { onConflict: "user_id,item_id" }
     );
     if (error) return { success: false, error: error.message };
+
+    const { data: item } = await supabase
+      .from("completion_items")
+      .select("title")
+      .eq("id", itemId)
+      .maybeSingle();
+
+    await awardXP(userId, XP_REWARDS.tracker_item_completed, "tracker_item_completed");
+    await trackActivity(
+      userId,
+      "tracker_item_completed",
+      `Completed: ${(item?.title as string) ?? "Tracker item"}`,
+      { item_id: itemId }
+    );
   } else {
     const { error } = await supabase
       .from("user_progress")
@@ -74,6 +90,7 @@ export async function setItemProgress(
   if (completed) {
     await evaluateAndUnlockAchievements(userId);
     revalidatePath("/profile");
+    revalidatePath("/u");
     revalidatePath("/leaderboard");
   }
 
@@ -101,8 +118,25 @@ export async function syncLocalProgressToServer(
   });
 
   if (error) return { success: false, error: error.message };
+
+  for (const itemId of itemIds) {
+    const { data: item } = await supabase
+      .from("completion_items")
+      .select("title")
+      .eq("id", itemId)
+      .maybeSingle();
+    await awardXP(userId, XP_REWARDS.tracker_item_completed, "tracker_item_completed");
+    await trackActivity(
+      userId,
+      "tracker_item_completed",
+      `Completed: ${(item?.title as string) ?? "Tracker item"}`,
+      { item_id: itemId }
+    );
+  }
+
   await evaluateAndUnlockAchievements(userId);
   revalidatePath("/profile");
+  revalidatePath("/u");
   revalidatePath("/leaderboard");
   return { success: true };
 }
