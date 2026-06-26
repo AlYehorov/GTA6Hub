@@ -65,10 +65,10 @@ export function ContentOpportunitiesSection({
                 <div className="flex shrink-0 flex-col gap-2">
                   {opp.sourceItemId ? (
                     <EditorialActionButton
-                      label="Generate Draft"
+                      label="Open in Editor"
                       action={{
-                        type: "generate-draft",
-                        sourceItemId: opp.sourceItemId,
+                        type: "navigate",
+                        href: "/admin/editor",
                       }}
                     />
                   ) : (
@@ -88,10 +88,9 @@ export function ContentOpportunitiesSection({
       )}
 
       <p className="mt-4 text-xs text-white/35">
-        Scores are heuristic from Rockstar sources, Reddit, entity gaps, and curated
-        ideas.{" "}
-        <Link href="/admin/sources" className="text-gta-pink hover:underline">
-          Manage sources →
+        Scores are heuristic from clustered sources, entity gaps, and editorial rules.{" "}
+        <Link href="/admin/editor" className="text-gta-pink hover:underline">
+          Editor-in-Chief →
         </Link>
       </p>
     </section>

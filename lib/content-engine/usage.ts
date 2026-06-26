@@ -85,7 +85,9 @@ export async function getContentEngineUsageStats(): Promise<ContentEngineUsageSt
 
   const rows = todayRows ?? [];
   const plansToday = rows.filter((r) => r.action === "content_plan").length;
-  const draftsToday = rows.filter((r) => r.action === "content_draft").length;
+  const draftsToday = rows.filter(
+    (r) => r.action === "content_draft" || r.action === "opportunity_article"
+  ).length;
   const estimatedCostTodayUsd = rows.reduce(
     (sum, r) => sum + Number(r.estimated_cost_usd ?? 0),
     0

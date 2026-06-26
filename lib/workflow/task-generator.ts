@@ -35,7 +35,7 @@ export async function generateEditorialTaskCandidates(): Promise<
   const scored = published.map(scoreSeoArticle);
   const cannibalization = detectCannibalization(scored, 8);
 
-  const opportunities = rankContentOpportunities({
+  const opportunities = await rankContentOpportunities({
     sources,
     gaps: gapsRaw,
     existingArticleTitles: published.map((a) => a.title),

@@ -268,7 +268,7 @@ export async function loadEditorialDashboardData(): Promise<EditorialDashboardDa
     10
   );
 
-  const opportunities = rankContentOpportunities({
+  const opportunities = await rankContentOpportunities({
     sources,
     gaps,
     existingArticleTitles: publishedArticles.map((a) => a.title),

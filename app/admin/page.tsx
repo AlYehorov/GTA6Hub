@@ -83,10 +83,10 @@ export default async function AdminDashboardPage() {
             description="Content inventory, improve queue, coverage, and weekly report"
           />
           <AdminLink
-            href="/admin/content-engine"
+            href="/admin/editor"
             icon={<Wand2 className="size-5" />}
-            title="Content Engine"
-            description="Two-step AI — content plans, pack drafts, workflow handoff"
+            title="Editor-in-Chief"
+            description="Morning briefing — scored opportunities, one-click article generation"
           />
           <AdminLink
             href="/admin/drafts"
