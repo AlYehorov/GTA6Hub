@@ -8,7 +8,7 @@ import {
 import { detectOutdatedArticles } from "@/lib/editorial/outdated";
 import type { ArticleSeoInput } from "@/lib/editorial/types";
 import { getContentEngineUsageStats } from "@/lib/content-engine/usage";
-import { getOpportunityStatusMap } from "@/lib/opportunity-engine/queries";
+import { getOpportunityStatusMap, getOpportunityDraftLinksFromAiDrafts } from "@/lib/opportunity-engine/queries";
 import { rankEditorialOpportunities } from "@/lib/opportunity-engine/ranker";
 import { buildEditorialRecommendation } from "@/lib/opportunity-engine/recommendation";
 import { computeTrendingKeywords } from "@/lib/opportunity-engine/trending";
@@ -138,7 +138,8 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
     articles,
     entityRows,
     outdated,
-    statusMap,
+    persistedStatus,
+    draftLinks,
     usage,
   ] = await Promise.all([
     getAllSourceItemsAdmin({ limit: 500 }),
@@ -147,8 +148,21 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
     fetchEntityRowsForGaps(),
     detectOutdatedArticles(20),
     getOpportunityStatusMap(),
+    getOpportunityDraftLinksFromAiDrafts(),
     getContentEngineUsageStats(),
   ]);
+
+  const statusMap = new Map(persistedStatus);
+  for (const [key, link] of draftLinks) {
+    const existing = statusMap.get(key);
+    if (!existing?.aiDraftId) {
+      statusMap.set(key, {
+        status: link.status,
+        aiDraftId: link.aiDraftId,
+        workspaceId: existing?.workspaceId ?? null,
+      });
+    }
+  }
 
   const windowSources = allSources.filter(
     (s) => s.created_at >= windowStart || (s.published_at && s.published_at >= windowStart)

@@ -2,13 +2,23 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import type { AiDraftListItem, AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { SourceLabel, SourcePlatform } from "@/lib/types/source";
-import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
 
 const STATUS_ORDER: Record<AiDraftListItem["status"], number> = {
   pending: 0,
   approved: 1,
   rejected: 2,
   published: 3,
+};
+
+const FALLBACK_SOURCE_ITEM: AiDraftWithSource["source_item"] = {
+  id: "opportunity",
+  source: "rockstar_newswire",
+  source_type: "editorial_opportunity",
+  source_label: "community",
+  source_url: "",
+  external_id: "",
+  title: "Editorial opportunity (clustered sources)",
+  published_at: null,
 };
 
 export async function getAllDraftsAdmin(): Promise<AiDraftListItem[]> {
@@ -44,9 +54,7 @@ export async function getAllDraftsAdmin(): Promise<AiDraftListItem[]> {
     };
   });
 
-  return drafts
-    .filter((draft) => meetsConfidenceThreshold(draft.confidence))
-    .sort((a, b) => {
+  return drafts.sort((a, b) => {
     const statusDiff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
     if (statusDiff !== 0) return statusDiff;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -69,13 +77,13 @@ export async function getDraftByIdAdmin(id: string): Promise<AiDraftWithSource |
   if (error || !data) return null;
 
   const { source_item, ...draft } = data;
-  const fullDraft = {
-    ...(draft as unknown as Omit<AiDraftWithSource, "source_item">),
-    source_item: source_item as unknown as AiDraftWithSource["source_item"],
-  };
+  const resolvedSource =
+    (source_item as AiDraftWithSource["source_item"] | null) ?? FALLBACK_SOURCE_ITEM;
 
-  if (!meetsConfidenceThreshold(Number(fullDraft.confidence))) return null;
-  return fullDraft;
+  return {
+    ...(draft as unknown as Omit<AiDraftWithSource, "source_item">),
+    source_item: resolvedSource,
+  };
 }
 
 export async function getDraftStats(): Promise<Record<string, number>> {
@@ -84,12 +92,10 @@ export async function getDraftStats(): Promise<Record<string, number>> {
   }
 
   const supabase = createAdminClient();
-  const { data } = await supabase.from("ai_drafts").select("status, confidence");
+  const { data } = await supabase.from("ai_drafts").select("status");
 
   const stats = { pending: 0, approved: 0, rejected: 0, published: 0 };
   for (const row of data ?? []) {
-    const confidence = Number(row.confidence);
-    if (!meetsConfidenceThreshold(confidence)) continue;
     const status = row.status as keyof typeof stats;
     if (status in stats) stats[status]++;
   }

@@ -58,7 +58,7 @@ export async function upsertOpportunityStatus(input: {
   if (!isSupabaseAdminConfigured()) return;
 
   const supabase = createAdminClient();
-  await supabase.from("editorial_opportunities").upsert(
+  const { error } = await supabase.from("editorial_opportunities").upsert(
     {
       cluster_key: input.clusterKey,
       title: input.title,
@@ -70,4 +70,32 @@ export async function upsertOpportunityStatus(input: {
     },
     { onConflict: "cluster_key" }
   );
+
+  if (error) throw new Error(error.message);
+}
+
+export async function getOpportunityDraftLinksFromAiDrafts(): Promise<
+  Map<string, { aiDraftId: string; status: OpportunityStatus }>
+> {
+  const map = new Map<string, { aiDraftId: string; status: OpportunityStatus }>();
+  if (!isSupabaseAdminConfigured()) return map;
+
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("ai_drafts")
+    .select("id, opportunity_cluster_key, status")
+    .not("opportunity_cluster_key", "is", null)
+    .order("created_at", { ascending: false });
+
+  for (const row of data ?? []) {
+    const key = row.opportunity_cluster_key as string;
+    if (!key || map.has(key)) continue;
+    const draftStatus = row.status as string;
+    map.set(key, {
+      aiDraftId: row.id as string,
+      status: draftStatus === "published" ? "workflow_sent" : "draft_generated",
+    });
+  }
+
+  return map;
 }

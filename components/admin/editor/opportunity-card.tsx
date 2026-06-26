@@ -1,9 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { EditorialOpportunity } from "@/lib/opportunity-engine/types";
@@ -24,18 +24,47 @@ function StarRating({ stars }: { stars: number }) {
 export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportunity }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [feedback, setFeedback] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
+
+  const hasDraft =
+    opportunity.status === "draft_generated" || Boolean(opportunity.aiDraftId);
 
   function runGenerate() {
+    setFeedback(null);
     startTransition(async () => {
       const result = await generateArticleAction(opportunity.id);
-      if (result.redirectTo) router.push(result.redirectTo);
-      else router.refresh();
+      if (!result.success) {
+        setFeedback({
+          type: "error",
+          message: result.error ?? "Generation failed",
+        });
+        return;
+      }
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+        return;
+      }
+      setFeedback({
+        type: "success",
+        message: "Draft created. Open AI Drafts to review.",
+      });
+      router.refresh();
     });
   }
 
   function runIgnore() {
     startTransition(async () => {
-      await markOpportunityIgnoredAction(opportunity.id);
+      const result = await markOpportunityIgnoredAction(opportunity.id);
+      if (!result.success) {
+        setFeedback({
+          type: "error",
+          message: result.error ?? "Could not dismiss",
+        });
+        return;
+      }
       router.refresh();
     });
   }
@@ -49,6 +78,24 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
             {opportunity.title}
           </h3>
           <p className="mt-1 text-sm text-white/45">{opportunity.summary}</p>
+
+          {feedback && (
+            <p
+              className={cn(
+                "mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-sm",
+                feedback.type === "error"
+                  ? "border border-red-500/30 bg-red-500/10 text-red-300"
+                  : "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+              )}
+            >
+              {feedback.type === "error" ? (
+                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              ) : (
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+              )}
+              {feedback.message}
+            </p>
+          )}
 
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div>
@@ -100,11 +147,11 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
         </div>
 
         <div className="flex shrink-0 flex-col gap-2">
-          {opportunity.status !== "ignored" && opportunity.status !== "draft_generated" && (
+          {!hasDraft && opportunity.status !== "ignored" && (
             <>
               <Button type="button" size="sm" disabled={pending} onClick={runGenerate}>
                 {pending && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
-                Generate Article
+                {pending ? "Generating…" : "Generate Article"}
               </Button>
               <Button
                 type="button"
@@ -117,12 +164,12 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
               </Button>
             </>
           )}
-          {opportunity.aiDraftId && (
+          {hasDraft && opportunity.aiDraftId && (
             <Link
               href={`/admin/drafts/${opportunity.aiDraftId}`}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              className={cn(buttonVariants({ variant: "default", size: "sm" }))}
             >
-              View Draft
+              Review Draft
             </Link>
           )}
           {opportunity.workspaceId && (

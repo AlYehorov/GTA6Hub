@@ -158,35 +158,57 @@ export async function generateArticleFromOpportunity(
   const supabase = createAdminClient();
   const primarySourceId = resolvedSources[0]?.id ?? null;
 
-  const { data, error } = await supabase
+  if (!primarySourceId) {
+    throw new Error("No source items linked to this opportunity — cannot save draft");
+  }
+
+  const basePayload = {
+    source_item_id: primarySourceId,
+    title: draft.title,
+    excerpt: draft.excerpt,
+    content: draft.content,
+    category: draft.category,
+    suggested_tags: draft.tags,
+    seo_title: draft.seo_title,
+    seo_description: draft.seo_description,
+    confidence: draft.confidence,
+    status: "pending" as const,
+  };
+
+  let insertResult = await supabase
     .from("ai_drafts")
-    .insert({
-      source_item_id: primarySourceId,
-      title: draft.title,
-      excerpt: draft.excerpt,
-      content: draft.content,
-      category: draft.category,
-      suggested_tags: draft.tags,
-      seo_title: draft.seo_title,
-      seo_description: draft.seo_description,
-      confidence: draft.confidence,
-      status: "pending",
-    })
+    .insert({ ...basePayload, opportunity_cluster_key: opportunity.clusterKey })
     .select("id")
     .single();
+
+  if (
+    insertResult.error?.message?.includes("opportunity_cluster_key")
+  ) {
+    insertResult = await supabase
+      .from("ai_drafts")
+      .insert(basePayload)
+      .select("id")
+      .single();
+  }
+
+  const { data, error } = insertResult;
 
   if (error || !data) throw new Error(error?.message ?? "Failed to save draft");
 
   const draftId = data.id as string;
 
-  await upsertOpportunityStatus({
-    clusterKey: opportunity.clusterKey,
-    title: opportunity.title,
-    score: opportunity.score,
-    status: "draft_generated",
-    aiDraftId: draftId,
-    metadata: { opportunity_id: opportunityId },
-  });
+  try {
+    await upsertOpportunityStatus({
+      clusterKey: opportunity.clusterKey,
+      title: opportunity.title,
+      score: opportunity.score,
+      status: "draft_generated",
+      aiDraftId: draftId,
+      metadata: { opportunity_id: opportunityId },
+    });
+  } catch {
+    // editorial_opportunities table may be missing — draft is still valid
+  }
 
   return { draftId, opportunity };
 }

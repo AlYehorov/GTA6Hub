@@ -23,7 +23,7 @@ export default async function AdminDraftsPage() {
     <>
       <PageHeader
         title="AI Drafts"
-        description={`Review AI-generated drafts with at least ${confidencePercent(MIN_CONTENT_CONFIDENCE)}% confidence before publishing.`}
+        description="Review AI-generated drafts before publishing. All drafts appear here for human review."
       />
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {!configured && (
@@ -41,11 +41,11 @@ export default async function AdminDraftsPage() {
 
         {drafts.length === 0 ? (
           <p className="py-12 text-center text-white/40">
-            No drafts at or above {confidencePercent(MIN_CONTENT_CONFIDENCE)}% confidence.{" "}
-            <Link href="/admin/sources" className="text-gta-pink hover:underline">
-              Run source ingestion
-            </Link>{" "}
-            to generate drafts.
+            No drafts yet.{" "}
+            <Link href="/admin/editor" className="text-gta-pink hover:underline">
+              Generate from Editor-in-Chief
+            </Link>
+            .
           </p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-white/[0.06]">
