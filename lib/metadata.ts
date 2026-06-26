@@ -41,8 +41,12 @@ export const rootMetadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-icon", type: "image/png", sizes: "180x180" }],
+    shortcut: "/favicon.ico",
   },
   openGraph: {
     title: `${SITE_NAME} — GTA VI Community Hub`,

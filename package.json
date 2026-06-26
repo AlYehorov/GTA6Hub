@@ -16,6 +16,7 @@
     "cleanup:videos": "node scripts/cleanup-videos.mjs",
     "cleanup:content": "node scripts/cleanup-content.mjs",
     "fetch:gta6-images-2k": "node scripts/fetch-gta6-images-2k.mjs",
+    "generate:favicons": "node scripts/generate-favicons.mjs",
     "seed:entities": "node scripts/seed-entities.mjs",
     "validate:env": "node scripts/validate-env.mjs"
   },
@@ -42,6 +43,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "^15.5.19",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.34.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
