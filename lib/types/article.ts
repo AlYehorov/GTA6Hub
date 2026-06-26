@@ -42,9 +42,12 @@ export interface Article {
   updated_at: string;
 }
 
+import type { RelatedEntity } from "@/lib/knowledge-graph/types";
+
 export interface ArticleWithRelations extends Article {
   category: Category | null;
   tags: Tag[];
+  related_entities?: RelatedEntity[];
 }
 
 export interface ArticleFormData {

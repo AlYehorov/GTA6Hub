@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText, Rss, Sparkles, MapPin, Trophy, Calendar, Users, Search, ListTodo } from "lucide-react";
+import { Plus, FileText, Rss, Sparkles, MapPin, Trophy, Calendar, Users, Search, ListTodo, Network } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { getAllArticlesAdmin } from "@/lib/articles/queries";
@@ -57,6 +57,12 @@ export default async function AdminDashboardPage() {
             icon={<Rss className="size-5" />}
             title="Sources"
             description="Ingest content from external platforms"
+          />
+          <AdminLink
+            href="/admin/entities"
+            icon={<Network className="size-5" />}
+            title="Knowledge Graph"
+            description="Entities, aliases, extraction, and merge suggestions"
           />
           <AdminLink
             href="/admin/workflow"
