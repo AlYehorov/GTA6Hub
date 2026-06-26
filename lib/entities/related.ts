@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isGta6Content } from "@/lib/gta6/content-filter";
 import { ENTITY_KINDS, entityHref } from "@/lib/entities/config";
 import { getRelatedEntities } from "@/lib/entities/queries";
 import type { EntityPageData, GameEntity, GameEntityKind, RelatedLink } from "@/lib/types/game-entity";
@@ -22,7 +23,9 @@ async function searchArticlesByKeyword(
     .or(`title.ilike.${pattern},excerpt.ilike.${pattern},content.ilike.${pattern}`)
     .limit(limit);
 
-  return (data ?? []).map((row) => ({
+  return (data ?? [])
+    .filter((row) => isGta6Content(row.title as string))
+    .map((row) => ({
     title: row.title as string,
     href: type === "guide" ? `/guides/${row.slug}` : `/news/${row.slug}`,
     type: type === "guide" ? "Guide" : "News",
@@ -41,7 +44,9 @@ async function getFallbackArticles(type: "news" | "guide", limit: number): Promi
     .order("published_at", { ascending: false })
     .limit(limit);
 
-  return (data ?? []).map((row) => ({
+  return (data ?? [])
+    .filter((row) => isGta6Content(row.title as string))
+    .map((row) => ({
     title: row.title as string,
     href: type === "guide" ? `/guides/${row.slug}` : `/news/${row.slug}`,
     type: type === "guide" ? "Guide" : "News",

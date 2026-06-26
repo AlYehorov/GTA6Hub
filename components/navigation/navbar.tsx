@@ -12,9 +12,17 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    let ticking = false;
+
     function onScroll() {
-      setScrolled(window.scrollY > 24);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 24);
+        ticking = false;
+      });
     }
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -24,7 +32,7 @@ export function Navbar() {
     <header className="pointer-events-none fixed inset-x-0 top-0 z-50 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 lg:px-8">
       <div
         className={cn(
-          "pointer-events-auto mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-white/10 bg-black/60 shadow-lg shadow-black/30 backdrop-blur-md backdrop-saturate-150 transition-all duration-500 ease-out supports-[backdrop-filter]:bg-black/40 supports-[backdrop-filter]:backdrop-blur-2xl",
+          "pointer-events-auto mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-white/10 bg-black/75 shadow-lg shadow-black/30 backdrop-blur-md transition-all duration-300 ease-out supports-[backdrop-filter]:bg-black/55 supports-[backdrop-filter]:backdrop-blur-md",
           scrolled
             ? "h-11 px-3.5 sm:h-12 sm:px-5"
             : "h-12 px-4 sm:h-[52px] sm:px-5"

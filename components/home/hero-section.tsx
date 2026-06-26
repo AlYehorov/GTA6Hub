@@ -9,7 +9,7 @@ export function HeroSection() {
   return (
     <section className="relative h-[80vh] h-[80dvh] min-h-[28rem] max-h-[900px] w-full overflow-hidden bg-black sm:min-h-[35rem]">
       <HeroBackground
-        src={GTA6_IMAGES.jasonLucia03Landscape}
+        src={GTA6_IMAGES.heroViceCity}
         alt="Jason and Lucia with Vice City skyline — GTA VI official artwork"
       />
 

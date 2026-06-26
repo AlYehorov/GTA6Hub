@@ -232,6 +232,11 @@
   .carousel-scroll > * {
     scroll-snap-align: start;
   }
+
+  .defer-paint {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 420px;
+  }
 }
 
 /* Article markdown — Newswire / Apple News style */

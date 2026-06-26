@@ -1,6 +1,7 @@
 import { sourceIngestionService } from "@/lib/sources/source-ingestion-service";
 import { aiDraftService } from "@/lib/ai/ai-draft-service";
 import { upsertVideoFromYoutubeSource } from "@/lib/videos/queries";
+import { isGta6SourceItem } from "@/lib/gta6/content-filter";
 import type { SourceItem, SourcePlatform } from "@/lib/types/source";
 import { getConnector } from "@/lib/sources/registry";
 
@@ -33,10 +34,7 @@ export class IngestAndDraftWorkflow {
 
       for (const source of ingestion.items) {
         try {
-          await this.prepareSourceSideEffects(source);
-          await aiDraftService.createDraft(source);
-          await sourceIngestionService.markProcessed(source.id);
-          result.draftsCreated++;
+          await this.processSource(source, result);
         } catch (err) {
           result.errors.push(
             err instanceof Error ? err.message : `Draft failed for ${source.id}`
@@ -75,10 +73,7 @@ export class IngestAndDraftWorkflow {
 
     for (const source of unprocessed) {
       try {
-        await this.prepareSourceSideEffects(source);
-        await aiDraftService.createDraft(source);
-        await sourceIngestionService.markProcessed(source.id);
-        result.draftsCreated++;
+        await this.processSource(source, result);
       } catch (err) {
         result.errors.push(
           err instanceof Error ? err.message : `Failed to process ${source.id}`
@@ -107,10 +102,7 @@ export class IngestAndDraftWorkflow {
 
       for (const source of ingestion.items) {
         try {
-          await this.prepareSourceSideEffects(source);
-          await aiDraftService.createDraft(source);
-          await sourceIngestionService.markProcessed(source.id);
-          result.draftsCreated++;
+          await this.processSource(source, result);
         } catch (err) {
           result.errors.push(
             err instanceof Error ? err.message : `Draft failed for ${source.id}`
@@ -122,6 +114,20 @@ export class IngestAndDraftWorkflow {
     }
 
     return result;
+  }
+
+  private async processSource(source: SourceItem, result: WorkflowResult): Promise<void> {
+    if (!isGta6SourceItem(source)) {
+      await sourceIngestionService.markProcessed(source.id);
+      result.skipped++;
+      return;
+    }
+
+    await this.prepareSourceSideEffects(source);
+    const draft = await aiDraftService.createDraft(source);
+    await sourceIngestionService.markProcessed(source.id);
+    if (draft) result.draftsCreated++;
+    else result.skipped++;
   }
 
   private async prepareSourceSideEffects(source: SourceItem): Promise<void> {

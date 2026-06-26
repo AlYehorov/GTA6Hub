@@ -3,6 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAllDraftsAdmin, getDraftStats } from "@/lib/drafts/queries";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
+import { MIN_CONTENT_CONFIDENCE, confidencePercent } from "@/lib/editorial/confidence";
 import { formatDate } from "@/lib/utils/format-date";
 import {
   SOURCE_LABEL_STYLES,
@@ -22,7 +23,7 @@ export default async function AdminDraftsPage() {
     <>
       <PageHeader
         title="AI Drafts"
-        description="Review AI-generated drafts before publishing. Pending drafts appear first."
+        description={`Review AI-generated drafts with at least ${confidencePercent(MIN_CONTENT_CONFIDENCE)}% confidence before publishing.`}
       />
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {!configured && (
@@ -40,7 +41,7 @@ export default async function AdminDraftsPage() {
 
         {drafts.length === 0 ? (
           <p className="py-12 text-center text-white/40">
-            No AI drafts yet.{" "}
+            No drafts at or above {confidencePercent(MIN_CONTENT_CONFIDENCE)}% confidence.{" "}
             <Link href="/admin/sources" className="text-gta-pink hover:underline">
               Run source ingestion
             </Link>{" "}
@@ -124,9 +125,11 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 function ConfidenceBadge({ value }: { value: number }) {
-  const pct = Math.round(value * 100);
+  const pct = confidencePercent(value);
   const color =
-    pct >= 85 ? "text-emerald-400" : pct >= 60 ? "text-amber-400" : "text-red-400";
+    pct >= confidencePercent(MIN_CONTENT_CONFIDENCE)
+      ? "text-emerald-400"
+      : "text-red-400";
 
   return <span className={cn("font-mono text-xs", color)}>{pct}%</span>;
 }

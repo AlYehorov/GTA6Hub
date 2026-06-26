@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { ArrowRight, Award, Users } from "lucide-react";
-import { getCommunityStats } from "@/lib/profile/queries";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getHomepageCommunityStats } from "@/lib/home/queries";
 
 export async function CommunitySection() {
-  if (!isSupabaseConfigured()) return null;
-
-  const stats = await getCommunityStats();
-  if (stats.total_players === 0 && stats.latest_achievements.length === 0) return null;
+  const stats = await getHomepageCommunityStats();
+  if (!stats) return null;
 
   return (
-    <section className="section-reveal px-4 sm:px-6 lg:px-8">
+    <section className="section-reveal defer-paint px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>

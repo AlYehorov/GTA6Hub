@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured, isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { editorialLabelFromCategory } from "@/lib/newsroom/labels";
+import { isGta6Content } from "@/lib/gta6/content-filter";
+import { meetsArticleConfidenceThreshold } from "@/lib/editorial/confidence";
 import type {
   ArticleListItem,
   ArticleType,
@@ -37,6 +39,14 @@ function mapListItem(row: Record<string, unknown>): ArticleListItem {
   };
 }
 
+function filterGta6Articles(items: ArticleListItem[]): ArticleListItem[] {
+  return items.filter(
+    (item) =>
+      isGta6Content(item.title, item.excerpt) &&
+      meetsArticleConfidenceThreshold(item.ai_confidence)
+  );
+}
+
 export async function getPublishedArticles(
   type: ArticleType,
   limit = 50
@@ -57,7 +67,9 @@ export async function getPublishedArticles(
     return [];
   }
 
-  return (data ?? []).map((row) => mapListItem(row as Record<string, unknown>));
+  return filterGta6Articles(
+    (data ?? []).map((row) => mapListItem(row as Record<string, unknown>))
+  );
 }
 
 export async function getPublishedArticlesByCategory(
@@ -86,7 +98,9 @@ export async function getPublishedArticlesByCategory(
     .limit(limit);
 
   if (error) return [];
-  return (data ?? []).map((row) => mapListItem(row as Record<string, unknown>));
+  return filterGta6Articles(
+    (data ?? []).map((row) => mapListItem(row as Record<string, unknown>))
+  );
 }
 
 export async function getPublishedArticlesBySourceLabel(
@@ -107,7 +121,9 @@ export async function getPublishedArticlesBySourceLabel(
     .limit(limit);
 
   if (error) return [];
-  return (data ?? []).map((row) => mapListItem(row as Record<string, unknown>));
+  return filterGta6Articles(
+    (data ?? []).map((row) => mapListItem(row as Record<string, unknown>))
+  );
 }
 
 export async function getEditorialPicks(limit = 6): Promise<ArticleListItem[]> {
@@ -123,7 +139,9 @@ export async function getEditorialPicks(limit = 6): Promise<ArticleListItem[]> {
 
   if (error) return [];
 
-  const items = (data ?? []).map((row) => mapListItem(row as Record<string, unknown>));
+  const items = filterGta6Articles(
+    (data ?? []).map((row) => mapListItem(row as Record<string, unknown>))
+  );
   return items
     .sort((a, b) => (b.ai_confidence ?? 0) - (a.ai_confidence ?? 0))
     .slice(0, limit);
@@ -163,7 +181,11 @@ export async function getArticleBySlug(
     .single();
 
   if (error || !data) return null;
-  return mapArticle(data as Record<string, unknown>);
+
+  const article = mapArticle(data as Record<string, unknown>);
+  if (!isGta6Content(article.title, article.excerpt, article.content)) return null;
+  if (!meetsArticleConfidenceThreshold(article.ai_confidence)) return null;
+  return article;
 }
 
 export async function getRelatedArticles(
@@ -190,7 +212,9 @@ export async function getRelatedArticles(
 
   const { data, error } = await query;
   if (error) return [];
-  return (data ?? []).map((row) => mapListItem(row as Record<string, unknown>));
+  return filterGta6Articles(
+    (data ?? []).map((row) => mapListItem(row as Record<string, unknown>))
+  );
 }
 
 export async function getAllArticlesAdmin(): Promise<ArticleListItem[]> {

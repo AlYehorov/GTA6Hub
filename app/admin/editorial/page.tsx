@@ -22,7 +22,9 @@ export default async function EditorialCalendarPage() {
       ])
     : [[], [], [], []];
 
-  const pendingDrafts = drafts.filter((d) => d.status === "pending");
+  const pendingDrafts = drafts.filter(
+    (d) => d.status === "pending"
+  );
 
   return (
     <>

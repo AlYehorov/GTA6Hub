@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { DISPLAY_IMAGE_QUALITY, CAROUSEL_IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/constants/image-display";
 import { cn } from "@/lib/utils";
 import type { CardVariant, CarouselItem } from "@/lib/types";
 
@@ -8,6 +9,7 @@ interface MediaCardProps {
   item: CarouselItem;
   className?: string;
   style?: React.CSSProperties;
+  eager?: boolean;
 }
 
 const VARIANT_STYLES: Record<CardVariant, string> = {
@@ -17,7 +19,7 @@ const VARIANT_STYLES: Record<CardVariant, string> = {
   square: "min-w-[168px] sm:min-w-[210px] lg:min-w-[240px] aspect-square",
 };
 
-export function MediaCard({ item, className, style }: MediaCardProps) {
+export function MediaCard({ item, className, style, eager = false }: MediaCardProps) {
   const variant = item.variant ?? "square";
 
   return (
@@ -36,14 +38,19 @@ export function MediaCard({ item, className, style }: MediaCardProps) {
         src={item.image}
         alt={item.title}
         fill
+        quality={variant === "hero" ? DISPLAY_IMAGE_QUALITY : CAROUSEL_IMAGE_QUALITY}
+        priority={eager && variant === "hero"}
+        loading={eager ? undefined : "lazy"}
         className={cn(
-          "object-cover transition-transform duration-[850ms] ease-out group-hover:scale-[1.08]",
+          "object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]",
           item.imagePosition ?? "object-center"
         )}
         sizes={
           variant === "hero"
-            ? "(max-width: 768px) 86vw, 720px"
-            : "(max-width: 640px) 180px, 280px"
+            ? IMAGE_SIZES.carouselHero
+            : variant === "portrait"
+              ? IMAGE_SIZES.carouselPortrait
+              : IMAGE_SIZES.carouselLandscape
         }
       />
 
@@ -95,9 +102,10 @@ export function FeaturedNewsCard({ item }: FeaturedNewsCardProps) {
           src={item.image}
           alt={item.title}
           fill
-          priority
-          className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.05]"
-          sizes="(max-width: 1280px) 100vw, 1280px"
+          quality={DISPLAY_IMAGE_QUALITY}
+          loading="lazy"
+          className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+          sizes={IMAGE_SIZES.featured}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/45 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />

@@ -11,6 +11,7 @@ import {
   trackDraftRejected,
   trackDraftPublished,
 } from "@/lib/analytics/track";
+import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
 import type { ArticleType } from "@/lib/types/article";
 
 export interface ActionResult {
@@ -45,6 +46,9 @@ export async function approveDraft(id: string): Promise<ActionResult> {
   if (!draft) return { success: false, error: "Draft not found" };
   if (draft.status !== "pending") {
     return { success: false, error: "Only pending drafts can be approved" };
+  }
+  if (!meetsConfidenceThreshold(draft.confidence)) {
+    return { success: false, error: "Draft confidence is below the 90% minimum" };
   }
 
   try {
@@ -108,6 +112,9 @@ export async function publishDraft(
   if (!draft) return { success: false, error: "Draft not found" };
   if (draft.status !== "approved") {
     return { success: false, error: "Draft must be approved before publishing" };
+  }
+  if (!meetsConfidenceThreshold(draft.confidence)) {
+    return { success: false, error: "Draft confidence is below the 90% minimum" };
   }
 
   try {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { DISPLAY_IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/constants/image-display";
 
 interface HeroBackgroundProps {
   src: string;
@@ -20,9 +21,17 @@ export function HeroBackground({ src, alt }: HeroBackgroundProps) {
       return;
     }
 
+    let ticking = false;
+
     function onScroll() {
-      setOffset(window.scrollY * 0.35);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setOffset(window.scrollY * 0.25);
+        ticking = false;
+      });
     }
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -31,16 +40,18 @@ export function HeroBackground({ src, alt }: HeroBackgroundProps) {
   return (
     <div className="absolute inset-0 overflow-hidden">
       <div
-        className="absolute inset-0 scale-110 will-change-transform"
-        style={{ transform: `translateY(${offset}px) scale(1.1)` }}
+        className="absolute inset-0 will-change-transform"
+        style={{ transform: `translate3d(0, ${offset}px, 0)` }}
       >
         <Image
           src={src}
           alt={alt}
           fill
           priority
+          fetchPriority="high"
+          quality={DISPLAY_IMAGE_QUALITY}
           className="object-cover object-[center_30%]"
-          sizes="100vw"
+          sizes={IMAGE_SIZES.hero}
         />
       </div>
     </div>

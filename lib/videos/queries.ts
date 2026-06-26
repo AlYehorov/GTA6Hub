@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/supabase/config";
 import type { Video, VideoCategory, VideoStatus } from "@/lib/types/video";
 import { slugify } from "@/lib/utils/article";
+import { isGta6VideoTitle, isValidYoutubeId } from "@/lib/videos/gta6-filter";
 
 function rowToVideo(row: Record<string, unknown>): Video {
   return {
@@ -33,7 +34,9 @@ export async function getPublishedVideos(limit = 50): Promise<Video[]> {
     .order("published_at", { ascending: false })
     .limit(limit);
 
-  return (data ?? []).map((row) => rowToVideo(row as Record<string, unknown>));
+  return (data ?? [])
+    .map((row) => rowToVideo(row as Record<string, unknown>))
+    .filter((video) => isGta6VideoTitle(video.title) && isValidYoutubeId(video.youtube_id));
 }
 
 export async function getVideoBySlug(slug: string): Promise<Video | null> {
@@ -48,7 +51,10 @@ export async function getVideoBySlug(slug: string): Promise<Video | null> {
     .maybeSingle();
 
   if (!data) return null;
-  return rowToVideo(data as Record<string, unknown>);
+
+  const video = rowToVideo(data as Record<string, unknown>);
+  if (!isGta6VideoTitle(video.title) || !isValidYoutubeId(video.youtube_id)) return null;
+  return video;
 }
 
 export async function getDraftVideosAdmin(limit = 20): Promise<Video[]> {
@@ -111,6 +117,7 @@ export async function upsertVideoFromYoutubeSource(input: {
   autoPublish?: boolean;
 }): Promise<Video | null> {
   if (!isSupabaseAdminConfigured()) return null;
+  if (!isGta6VideoTitle(input.title) || !isValidYoutubeId(input.youtube_id)) return null;
 
   const supabase = createAdminClient();
   const { data: existing } = await supabase

@@ -7,36 +7,17 @@ import {
   newsToCarouselItems,
 } from "@/lib/data/news-carousel";
 import { MOCK_LATEST_NEWS } from "@/lib/data/mock-news";
-import {
-  getPublishedArticles,
-  getPublishedArticlesByCategory,
-  getPublishedArticlesBySourceLabel,
-} from "@/lib/articles/queries";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-
-async function loadHomeNews() {
-  if (!isSupabaseConfigured()) return null;
-
-  const [latest, official, trailers, rumors, guides] = await Promise.all([
-    getPublishedArticles("news", 5),
-    getPublishedArticlesByCategory("news", "official", 4),
-    getPublishedArticlesByCategory("news", "trailer", 4),
-    getPublishedArticlesBySourceLabel("news", "unconfirmed", 4),
-    getPublishedArticles("guide", 4),
-  ]);
-
-  if (latest.length === 0) return null;
-  return { latest, official, trailers, rumors, guides };
-}
+import { getHomepageArticleSections } from "@/lib/home/queries";
+import type { ArticleListItem } from "@/lib/types/article";
 
 export async function HomeNewsroomSections() {
-  const live = await loadHomeNews();
+  const live = await getHomepageArticleSections();
 
   if (!live) {
     const allItems = newsToCarouselItems(MOCK_LATEST_NEWS.slice(0, 5));
     const [featured, ...rest] = allItems;
     return (
-      <section className="section-reveal px-4 sm:px-6 lg:px-8">
+      <section className="section-reveal defer-paint px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <SectionHeader title="Latest News" href="/newsroom" />
           {featured && <FeaturedNewsCard item={featured} />}
@@ -105,7 +86,7 @@ function HomeArticleRow({
   type = "news",
 }: {
   title: string;
-  articles: Awaited<ReturnType<typeof getPublishedArticles>>;
+  articles: ArticleListItem[];
   href: string;
   type?: "news" | "guide";
 }) {

@@ -22,12 +22,30 @@ function loadEnv() {
   }
 }
 
-function slugify(title: string) {
+function slugify(title) {
   return title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 80);
+}
+
+function isGta6VideoTitle(title) {
+  const gtaVi = [
+    /\bGTA\s*VI\b/i,
+    /\bGTA\s*6\b/i,
+    /\bGrand Theft Auto\s*VI\b/i,
+    /\bGrand Theft Auto\s*6\b/i,
+    /\bGTAVI\b/i,
+  ];
+  const exclude = [/\bGTA\s*Online\b/i, /\bGTA\s*V\b/i, /\bGTA\s*5\b/i];
+  if (!gtaVi.some((p) => p.test(title))) return false;
+  if (exclude.some((p) => p.test(title))) return false;
+  return true;
+}
+
+function isValidYoutubeId(id) {
+  return /^[A-Za-z0-9_-]{11}$/.test(id);
 }
 
 loadEnv();
@@ -52,7 +70,12 @@ async function seed() {
   console.log(`Found ${sources?.length ?? 0} YouTube source items`);
 
   for (const source of sources ?? []) {
-    const youtubeId = source.external_id as string;
+    if (!isGta6VideoTitle(source.title) || !isValidYoutubeId(source.external_id)) {
+      console.log(`  ~ skip non-GTA6 ${source.title}`);
+      continue;
+    }
+
+    const youtubeId = source.external_id;
     const { data: existing } = await supabase
       .from("videos")
       .select("id")
@@ -64,10 +87,10 @@ async function seed() {
       continue;
     }
 
-    const isTrailer = /trailer/i.test(source.title as string);
+    const isTrailer = /trailer/i.test(source.title);
     const { error } = await supabase.from("videos").insert({
       title: source.title,
-      slug: slugify(source.title as string),
+      slug: slugify(source.title),
       youtube_id: youtubeId,
       description: source.content ?? "",
       source_channel: "Rockstar Games",

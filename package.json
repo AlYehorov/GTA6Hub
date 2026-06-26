@@ -13,6 +13,9 @@
     "seed:tracker": "node scripts/seed-tracker.mjs",
     "seed:achievements": "node scripts/seed-achievements.mjs",
     "seed:videos": "node scripts/seed-videos.mjs",
+    "cleanup:videos": "node scripts/cleanup-videos.mjs",
+    "cleanup:content": "node scripts/cleanup-content.mjs",
+    "fetch:gta6-images-2k": "node scripts/fetch-gta6-images-2k.mjs",
     "seed:entities": "node scripts/seed-entities.mjs",
     "validate:env": "node scripts/validate-env.mjs"
   },

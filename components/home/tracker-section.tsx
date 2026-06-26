@@ -1,26 +1,14 @@
 import { TrackerSectionClient } from "@/components/home/tracker-section-client";
-import {
-  getAllPublishedItems,
-  getCompletionCategories,
-  getTrackerPublicTotals,
-} from "@/lib/tracker/queries";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getHomepageTrackerSnapshot } from "@/lib/home/queries";
 
 export async function TrackerSection() {
-  if (!isSupabaseConfigured()) return null;
-
-  const [items, categories, totals] = await Promise.all([
-    getAllPublishedItems(),
-    getCompletionCategories(),
-    getTrackerPublicTotals(),
-  ]);
-
-  if (items.length === 0) return null;
+  const snapshot = await getHomepageTrackerSnapshot();
+  if (!snapshot) return null;
 
   return (
     <TrackerSectionClient
-      items={items}
-      totalCategories={categories.length || totals.categoryCount}
+      items={snapshot.items}
+      totalCategories={snapshot.totalCategories}
     />
   );
 }

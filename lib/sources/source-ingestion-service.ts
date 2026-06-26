@@ -5,6 +5,7 @@ import type { SourceItem, SourceItemInput } from "@/lib/types/source";
 import { enforceSourceLabel } from "@/lib/types/source";
 import { getAllConnectors, getProductionConnectors } from "@/lib/sources/registry";
 import { hashString } from "@/lib/sources/fetch-utils";
+import { isGta6SourceItem } from "@/lib/gta6/content-filter";
 
 export interface IngestionResult {
   inserted: number;
@@ -68,6 +69,11 @@ export class SourceIngestionService {
     let skipped = 0;
 
     for (const raw of inputs) {
+      if (!isGta6SourceItem(raw)) {
+        skipped++;
+        continue;
+      }
+
       const input: SourceItemInput = {
         ...raw,
         source_label: enforceSourceLabel(raw),

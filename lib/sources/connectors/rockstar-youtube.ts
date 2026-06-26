@@ -1,6 +1,7 @@
 import type { SourceConnector } from "@/lib/sources/types";
 import type { SourceItemInput } from "@/lib/types/source";
 import { fetchWithTimeout, parseRssItems } from "@/lib/sources/fetch-utils";
+import { isGta6SourceItem } from "@/lib/gta6/content-filter";
 
 /** Official Rockstar Games YouTube channel */
 const ROCKSTAR_YOUTUBE_CHANNEL_ID = "UC6VcWc1rAoWdBCM0JxrRQ3A";
@@ -18,7 +19,10 @@ export class RockstarYoutubeConnector implements SourceConnector {
     const xml = await response.text();
     const items = parseRssItems(xml);
 
-    return items.slice(0, 15).map((item) => {
+    return items
+      .filter((item) => isGta6SourceItem({ source: "rockstar_youtube", title: item.title, content: item.description }))
+      .slice(0, 15)
+      .map((item) => {
       const videoIdMatch = item.link.match(/(?:v=|\/shorts\/|youtu\.be\/)([A-Za-z0-9_-]{11})/);
       const videoId = videoIdMatch?.[1] ?? item.guid;
 

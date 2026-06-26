@@ -19,8 +19,8 @@ export const MOCK_SOURCE_ITEMS: SourceItemInput[] = [
     source: "rockstar_youtube",
     source_type: "youtube_video",
     source_label: "official",
-    source_url: "https://www.youtube.com/watch?v=mock-gta6-trailer2",
-    external_id: "mock-yt-trailer2",
+    source_url: "https://www.youtube.com/watch?v=VQRLujxTm3c",
+    external_id: "VQRLujxTm3c",
     title: "Grand Theft Auto VI Trailer 2",
     content:
       "Official second trailer for Grand Theft Auto VI. Features Lucia and Jason in Vice City, Everglades sequences, nightlife districts, and high-speed pursuits across Leonida.",

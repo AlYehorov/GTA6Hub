@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { DraftReviewActions } from "@/components/admin/draft-review-actions";
 import { getDraftByIdAdmin } from "@/lib/drafts/queries";
+import { confidencePercent, MIN_CONTENT_CONFIDENCE } from "@/lib/editorial/confidence";
 import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
 import type { SourcePlatform } from "@/lib/types/source";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,7 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
   const draft = await getDraftByIdAdmin(id);
   if (!draft) notFound();
 
-  const pct = Math.round(draft.confidence * 100);
+  const pct = confidencePercent(draft.confidence);
 
   return (
     <>
@@ -38,7 +39,9 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
             <span
               className={cn(
                 "font-mono",
-                pct >= 85 ? "text-emerald-400" : pct >= 60 ? "text-amber-400" : "text-red-400"
+                pct >= confidencePercent(MIN_CONTENT_CONFIDENCE)
+                  ? "text-emerald-400"
+                  : "text-red-400"
               )}
             >
               {pct}%

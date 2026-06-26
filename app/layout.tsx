@@ -7,12 +7,18 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,
 });
+
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 export const metadata: Metadata = rootMetadata;
 
@@ -33,6 +39,10 @@ export default function RootLayout({
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {supabaseOrigin ? <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" /> : null}
+        <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
+      </head>
       <body className="flex min-h-full min-h-screen-safe flex-col">
         <SiteLayout>{children}</SiteLayout>
       </body>

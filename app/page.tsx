@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/home/hero-section";
 import { HomeNewsroomSections } from "@/components/home/home-newsroom-sections";
 import { TrackerSection } from "@/components/home/tracker-section";
 import { CommunitySection } from "@/components/home/community-section";
 import { ContentCarousel } from "@/components/home/content-carousel";
+import { HomeSectionFallback } from "@/components/home/home-section-fallback";
 import {
   MOCK_CHARACTERS,
   MOCK_VEHICLES,
@@ -11,6 +13,8 @@ import {
   MOCK_MAP_LOCATIONS,
 } from "@/lib/data/mock-content";
 import { createPageMetadata } from "@/lib/metadata";
+
+export const revalidate = 120;
 
 export const metadata: Metadata = createPageMetadata({
   title: "GTA VI Community Hub",
@@ -25,11 +29,17 @@ export default function HomePage() {
       <HeroSection />
 
       <div className="relative space-y-16 py-16 sm:space-y-24 sm:py-24">
-        <HomeNewsroomSections />
+        <Suspense fallback={<HomeSectionFallback />}>
+          <HomeNewsroomSections />
+        </Suspense>
 
-        <TrackerSection />
+        <Suspense fallback={<HomeSectionFallback className="mt-8" />}>
+          <TrackerSection />
+        </Suspense>
 
-        <CommunitySection />
+        <Suspense fallback={null}>
+          <CommunitySection />
+        </Suspense>
 
         <ContentCarousel
           title="Characters"

@@ -34,11 +34,16 @@ export function createPageMetadata(options: {
 
 export const rootMetadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  applicationName: SITE_NAME,
   title: {
     default: `${SITE_NAME} — GTA VI Community Hub`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+  },
   openGraph: {
     title: `${SITE_NAME} — GTA VI Community Hub`,
     description: SITE_DESCRIPTION,

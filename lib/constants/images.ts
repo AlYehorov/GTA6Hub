@@ -16,11 +16,12 @@ export const GTA6_IMAGES = {
   // Key art (use sparingly)
   jasonLucia03Landscape: "/images/gta6/jason-lucia-03-landscape.jpg",
   jasonLucia03Portrait: "/images/gta6/jason-lucia-03-portrait.jpg",
+  heroViceCity: "/images/gta6/hero-vice-city.jpg",
 
   // Environments & scenes
   viceCityBanner: "/images/gta6/vice-city-banner.jpg",
   viceCityBlank: "/images/gta6/vice-city-blank.jpg",
-  trailer2Header: "/images/gta6/trailer-2-header.webp",
+  trailer2Header: "/images/gta6/trailer-2-header.jpg",
 } as const;
 
 export type Gta6ImageKey = keyof typeof GTA6_IMAGES;

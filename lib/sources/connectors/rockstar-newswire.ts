@@ -9,9 +9,10 @@ import {
   fetchRockstarNewswireList,
   getRockstarNewswireGraphqlHash,
 } from "@/lib/sources/connectors/rockstar-graphql";
+import { isGta6SourceItem } from "@/lib/gta6/content-filter";
 
 const GOOGLE_NEWS_RSS =
-  "https://news.google.com/rss/search?q=site:rockstargames.com/newswire+Grand+Theft+Auto&hl=en-US&gl=US&ceid=US:en";
+  "https://news.google.com/rss/search?q=site:rockstargames.com/newswire+%22Grand+Theft+Auto+VI%22&hl=en-US&gl=US&ceid=US:en";
 
 export class RockstarNewswireConnector implements SourceConnector {
   readonly platform = "rockstar_newswire" as const;
@@ -35,7 +36,16 @@ export class RockstarNewswireConnector implements SourceConnector {
   private async fetchFromGraphQL(hash: string): Promise<SourceItemInput[]> {
     const posts = await fetchRockstarNewswireList(hash, 666);
 
-    return posts.slice(0, 15).map((post) => {
+    return posts
+      .filter((post) =>
+        isGta6SourceItem({
+          source: "rockstar_newswire",
+          title: post.title,
+          content: [post.excerpt, post.primary_tags?.map((t) => t.name).join(", ")].filter(Boolean).join("\n"),
+        })
+      )
+      .slice(0, 15)
+      .map((post) => {
       const url = post.url.startsWith("http")
         ? post.url
         : `https://www.rockstargames.com${post.url}`;
@@ -64,7 +74,16 @@ export class RockstarNewswireConnector implements SourceConnector {
     const xml = await response.text();
     const items = parseRssItems(xml);
 
-    return items.slice(0, 15).map((item) => ({
+    return items
+      .filter((item) =>
+        isGta6SourceItem({
+          source: "rockstar_newswire",
+          title: item.title,
+          content: item.description,
+        })
+      )
+      .slice(0, 15)
+      .map((item) => ({
       source: "rockstar_newswire",
       source_type: "newswire_post",
       source_label: "official",

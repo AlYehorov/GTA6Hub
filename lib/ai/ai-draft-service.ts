@@ -7,6 +7,7 @@ import {
   generateOpenAiDraft,
   isOpenAiConfigured,
 } from "@/lib/ai/providers/openai-provider";
+import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
 
 export class AIDraftService {
   /**
@@ -33,6 +34,10 @@ export class AIDraftService {
     if (!isSupabaseAdminConfigured()) return null;
 
     const generated = await this.generateFromSource(source);
+    if (!meetsConfidenceThreshold(generated.confidence)) {
+      return null;
+    }
+
     const supabase = createAdminClient();
 
     const { data, error } = await supabase

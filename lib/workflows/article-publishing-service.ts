@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { calculateReadingTime, slugify } from "@/lib/utils/article";
 import { getVideoBySourceItemId } from "@/lib/videos/queries";
+import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
 import type { AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { ArticleType } from "@/lib/types/article";
 import type { SourceLabel } from "@/lib/types/source";
@@ -27,6 +28,10 @@ export class ArticlePublishingService {
 
     if (draft.status !== "approved") {
       throw new Error("Only approved drafts can be published");
+    }
+
+    if (!meetsConfidenceThreshold(draft.confidence)) {
+      throw new Error("Draft confidence is below the 90% minimum required for publishing");
     }
 
     const supabase = createAdminClient();

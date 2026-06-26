@@ -2,6 +2,7 @@ import type { SourceConnector } from "@/lib/sources/types";
 import type { SourceItemInput } from "@/lib/types/source";
 import { fetchWithTimeout, parseRssItems, stripHtml } from "@/lib/sources/fetch-utils";
 import { CANONICAL_SITE_URL } from "@/lib/constants/site";
+import { isGta6SourceItem } from "@/lib/gta6/content-filter";
 
 const SUBREDDIT = "GTA6";
 const DEFAULT_MIN_SCORE = 100;
@@ -64,6 +65,12 @@ function toSourceItem(post: {
   };
 }
 
+function filterRedditItems(items: SourceItemInput[]): SourceItemInput[] {
+  return items.filter((item) =>
+    isGta6SourceItem({ source: "reddit", title: item.title, content: item.content })
+  );
+}
+
 export class RedditConnector implements SourceConnector {
   readonly platform = "reddit" as const;
 
@@ -72,7 +79,7 @@ export class RedditConnector implements SourceConnector {
 
     try {
       const fromJson = await this.fetchFromRedditJson(minScore);
-      if (fromJson.length > 0) return fromJson;
+      if (fromJson.length > 0) return filterRedditItems(fromJson);
     } catch (err) {
       console.warn(
         "[RedditConnector] JSON endpoint unavailable, trying fallbacks:",
@@ -82,7 +89,7 @@ export class RedditConnector implements SourceConnector {
 
     try {
       const fromPullPush = await this.fetchFromPullPush(minScore);
-      if (fromPullPush.length > 0) return fromPullPush;
+      if (fromPullPush.length > 0) return filterRedditItems(fromPullPush);
     } catch (err) {
       console.warn(
         "[RedditConnector] PullPush fallback failed:",
@@ -90,7 +97,7 @@ export class RedditConnector implements SourceConnector {
       );
     }
 
-    return this.fetchFromRss(minScore);
+    return filterRedditItems(await this.fetchFromRss(minScore));
   }
 
   private async fetchFromRedditJson(minScore: number): Promise<SourceItemInput[]> {
