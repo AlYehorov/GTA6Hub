@@ -119,14 +119,21 @@ export interface SourceEngineDetailData {
   openAiConfigured: boolean;
 }
 
+import type { JournalismBlock } from "@/lib/ai/journalism/types";
+
 export interface GeneratedPackDraft {
   title: string;
   slug: string;
   excerpt: string;
   content: string;
+  content_blocks?: JournalismBlock[];
   faq: Array<{ question: string; answer: string }>;
   seo_title: string;
   seo_description: string;
+  seo_og_title?: string;
+  seo_twitter_title?: string;
+  seo_canonical?: string;
+  seo_keywords?: string[];
   related_entity_slugs: string[];
   internal_link_suggestions: string[];
   confirmed_facts: string[];

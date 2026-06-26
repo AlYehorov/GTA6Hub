@@ -1,21 +1,18 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import {
-  createChatCompletionDetailed,
-  isOpenAiConfigured,
-} from "@/lib/ai/openai-client";
-import {
-  OPPORTUNITY_ARTICLE_SYSTEM_PROMPT,
-  buildOpportunityArticleUserPrompt,
-} from "@/lib/ai/prompts/opportunity-article";
+  buildInputFromOpportunity,
+  generateJournalismArticle,
+  journalismResultToPackDraft,
+} from "@/lib/ai/journalism/generator";
 import { assertDraftBudget, trackAiUsageEvent } from "@/lib/content-engine/usage";
-import type { GeneratedPackDraft } from "@/lib/content-engine/types";
 import { findOpportunityById } from "@/lib/opportunity-engine/loader";
 import { upsertOpportunityStatus } from "@/lib/opportunity-engine/queries";
 import type { EditorialOpportunity } from "@/lib/opportunity-engine/types";
 import { getSourceItemByIdAdmin } from "@/lib/sources/queries";
 import { getAllKgEntities } from "@/lib/knowledge-graph/queries";
 import { getAllVideosAdmin } from "@/lib/videos/queries";
+import { withoutJournalismColumns } from "@/lib/ai/journalism/draft-payload";
 import type { SourceItem } from "@/lib/types/source";
 
 async function fetchExistingArticle(
@@ -47,49 +44,6 @@ async function fetchExistingArticle(
   };
 }
 
-function normalizeDraft(
-  parsed: Partial<GeneratedPackDraft>,
-  opportunity: EditorialOpportunity
-): GeneratedPackDraft {
-  const title = parsed.title?.trim() || opportunity.title;
-  const slug =
-    parsed.slug?.trim() ||
-    opportunity.existingArticleSlug ||
-    title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 80);
-  const excerpt = parsed.excerpt?.trim() || opportunity.summary;
-  const body = parsed.content?.trim() || excerpt;
-
-  return {
-    title,
-    slug,
-    excerpt,
-    content: body,
-    faq: Array.isArray(parsed.faq) ? parsed.faq : [],
-    seo_title: (parsed.seo_title?.trim() || title).slice(0, 60),
-    seo_description: (parsed.seo_description?.trim() || excerpt).slice(0, 155),
-    related_entity_slugs: parsed.related_entity_slugs ?? [],
-    internal_link_suggestions:
-      parsed.internal_link_suggestions ?? opportunity.internalLinkTargets,
-    confirmed_facts: parsed.confirmed_facts ?? [],
-    speculation_notes: parsed.speculation_notes ?? [],
-    source_attribution: parsed.source_attribution?.trim() || opportunity.summary,
-    confidence:
-      typeof parsed.confidence === "number"
-        ? Math.max(0, Math.min(1, parsed.confidence))
-        : opportunity.confidence === "High"
-          ? 0.85
-          : opportunity.confidence === "Medium"
-            ? 0.65
-            : 0.45,
-    category: parsed.category?.trim() || opportunity.articleType,
-    tags: Array.isArray(parsed.tags) ? parsed.tags.filter(Boolean) : [],
-  };
-}
-
 export async function generateArticleFromOpportunity(
   opportunityId: string
 ): Promise<{ draftId: string; opportunity: EditorialOpportunity }> {
@@ -112,30 +66,19 @@ export async function generateArticleFromOpportunity(
   const entityIds = new Set(opportunity.entities.map((e) => e.id));
   const kgEntities = allKg.filter((e) => entityIds.has(e.id));
 
-  if (!isOpenAiConfigured()) {
-    throw new Error("OPENAI_API_KEY required to generate articles");
-  }
+  const journalismInput = buildInputFromOpportunity({
+    opportunity,
+    sources: resolvedSources,
+    videos: resolvedVideos,
+    entities: kgEntities,
+    existingArticle,
+  });
 
-  const { content, usage } = await createChatCompletionDetailed({
-    messages: [
-      { role: "system", content: OPPORTUNITY_ARTICLE_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: buildOpportunityArticleUserPrompt({
-          opportunity,
-          sources: resolvedSources,
-          videos: resolvedVideos,
-          entities: kgEntities,
-          existingArticle,
-          internalLinks: opportunity.internalLinkTargets,
-        }),
-      },
-    ],
-    temperature: 0.55,
-    max_tokens: 2800,
-    response_format: { type: "json_object" },
-    feature: "opportunity_article",
-    errorPrefix: "Opportunity article generation failed",
+  const { result, usage, rewriteCount } = await generateJournalismArticle(journalismInput);
+  const draft = journalismResultToPackDraft(result, {
+    title: opportunity.title,
+    slug: opportunity.existingArticleSlug ?? undefined,
+    excerpt: opportunity.summary,
   });
 
   await trackAiUsageEvent({
@@ -145,11 +88,9 @@ export async function generateArticleFromOpportunity(
     metadata: {
       opportunity_id: opportunityId,
       cluster_key: opportunity.clusterKey,
+      journalism_rewrite_count: rewriteCount,
     },
   });
-
-  const parsed = JSON.parse(content) as Partial<GeneratedPackDraft>;
-  const draft = normalizeDraft(parsed, opportunity);
 
   if (!isSupabaseAdminConfigured()) {
     throw new Error("Supabase admin not configured");
@@ -167,10 +108,15 @@ export async function generateArticleFromOpportunity(
     title: draft.title,
     excerpt: draft.excerpt,
     content: draft.content,
+    content_blocks: draft.content_blocks ?? null,
     category: draft.category,
     suggested_tags: draft.tags,
     seo_title: draft.seo_title,
     seo_description: draft.seo_description,
+    seo_og_title: draft.seo_og_title ?? null,
+    seo_twitter_title: draft.seo_twitter_title ?? null,
+    seo_canonical: draft.seo_canonical ?? null,
+    seo_keywords: draft.seo_keywords ?? null,
     confidence: draft.confidence,
     status: "pending" as const,
   };
@@ -181,14 +127,28 @@ export async function generateArticleFromOpportunity(
     .select("id")
     .single();
 
-  if (
-    insertResult.error?.message?.includes("opportunity_cluster_key")
-  ) {
+  if (insertResult.error?.message?.includes("opportunity_cluster_key")) {
     insertResult = await supabase
       .from("ai_drafts")
       .insert(basePayload)
       .select("id")
       .single();
+  }
+
+  if (insertResult.error?.message?.includes("content_blocks")) {
+    const legacyPayload = withoutJournalismColumns(basePayload);
+    insertResult = await supabase
+      .from("ai_drafts")
+      .insert({ ...legacyPayload, opportunity_cluster_key: opportunity.clusterKey })
+      .select("id")
+      .single();
+    if (insertResult.error?.message?.includes("opportunity_cluster_key")) {
+      insertResult = await supabase
+        .from("ai_drafts")
+        .insert(legacyPayload)
+        .select("id")
+        .single();
+    }
   }
 
   const { data, error } = insertResult;

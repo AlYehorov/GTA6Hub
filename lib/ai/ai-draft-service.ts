@@ -27,7 +27,7 @@ export class AIDraftService {
       }
     }
 
-    return generateMockDraft(source);
+    return await generateMockDraft(source);
   }
 
   async createDraft(source: SourceItem): Promise<AiDraft | null> {
