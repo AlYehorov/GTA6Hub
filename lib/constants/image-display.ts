@@ -1,6 +1,7 @@
 /** Sharp display defaults for homepage and editorial imagery. */
 export const DISPLAY_IMAGE_QUALITY = 90;
-export const CAROUSEL_IMAGE_QUALITY = 82;
+/** Must match a value in next.config `images.qualities` (75 | 90). */
+export const CAROUSEL_IMAGE_QUALITY = 90;
 
 export const IMAGE_SIZES = {
   /** Full-bleed hero — up to 4K source */

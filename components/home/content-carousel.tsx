@@ -21,7 +21,7 @@ export function ContentCarousel({
   hideHeader = false,
 }: ContentCarouselProps) {
   return (
-    <section className={cn("section-reveal defer-paint", className)}>
+    <section className={cn("section-reveal", className)}>
       <CarouselScrollRail
         title={title}
         seeAllHref={seeAllHref}

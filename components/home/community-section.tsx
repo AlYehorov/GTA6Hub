@@ -7,7 +7,7 @@ export async function CommunitySection() {
   if (!stats) return null;
 
   return (
-    <section className="section-reveal defer-paint px-4 sm:px-6 lg:px-8">
+    <section className="section-reveal px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>

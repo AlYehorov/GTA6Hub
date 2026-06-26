@@ -17,7 +17,7 @@ export async function HomeNewsroomSections() {
     const allItems = newsToCarouselItems(MOCK_LATEST_NEWS.slice(0, 5));
     const [featured, ...rest] = allItems;
     return (
-      <section className="section-reveal defer-paint px-4 sm:px-6 lg:px-8">
+      <section className="section-reveal px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <SectionHeader title="Latest News" href="/newsroom" />
           {featured && <FeaturedNewsCard item={featured} />}
