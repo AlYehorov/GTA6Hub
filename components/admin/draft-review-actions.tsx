@@ -3,9 +3,9 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Loader2, X, Send } from "lucide-react";
+import { Check, Loader2, X, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { approveDraft, rejectDraft, publishDraft } from "@/lib/actions/drafts";
+import { approveDraft, rejectDraft, publishDraft, deleteDraft } from "@/lib/actions/drafts";
 import type { AiDraftStatus } from "@/lib/types/ai-draft";
 
 interface DraftReviewActionsProps {
@@ -17,15 +17,24 @@ export function DraftReviewActions({ draftId, status }: DraftReviewActionsProps)
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  function run(action: () => Promise<{ success: boolean; error?: string; articleSlug?: string }>) {
+  function run(action: () => Promise<{ success: boolean; error?: string; articleSlug?: string; redirectTo?: string }>) {
     startTransition(async () => {
       const result = await action();
       if (!result.success) {
         alert(result.error ?? "Action failed");
         return;
       }
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+        return;
+      }
       router.refresh();
     });
+  }
+
+  function runDelete() {
+    if (!confirm("Delete this draft? You can regenerate it from Editor-in-Chief.")) return;
+    run(() => deleteDraft(draftId));
   }
 
   if (status === "published") {
@@ -41,7 +50,20 @@ export function DraftReviewActions({ draftId, status }: DraftReviewActionsProps)
   }
 
   if (status === "rejected") {
-    return <p className="text-sm text-white/40">This draft was rejected.</p>;
+    return (
+      <div className="flex flex-wrap gap-3">
+        <p className="text-sm text-white/40">This draft was rejected.</p>
+        <Button
+          disabled={isPending}
+          variant="outline"
+          onClick={runDelete}
+          className="gap-2 border-white/10 text-white/60 hover:bg-white/5"
+        >
+          {isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+          Delete
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -64,6 +86,15 @@ export function DraftReviewActions({ draftId, status }: DraftReviewActionsProps)
           >
             <X className="size-4" />
             Reject
+          </Button>
+          <Button
+            disabled={isPending}
+            variant="outline"
+            onClick={runDelete}
+            className="gap-2 border-white/10 text-white/60 hover:bg-white/5"
+          >
+            <Trash2 className="size-4" />
+            Delete
           </Button>
         </>
       )}

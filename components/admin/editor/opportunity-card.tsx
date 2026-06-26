@@ -3,13 +3,14 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { EditorialOpportunity } from "@/lib/opportunity-engine/types";
 import {
   generateArticleAction,
   markOpportunityIgnoredAction,
+  recreateArticleAction,
 } from "@/lib/actions/editor";
 
 function StarRating({ stars }: { stars: number }) {
@@ -31,6 +32,10 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
 
   const hasDraft =
     opportunity.status === "draft_generated" || Boolean(opportunity.aiDraftId);
+  const canRecreate =
+    hasDraft &&
+    opportunity.status !== "workflow_sent" &&
+    opportunity.status !== "ignored";
 
   function runGenerate() {
     setFeedback(null);
@@ -50,6 +55,29 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
       setFeedback({
         type: "success",
         message: "Draft created. Open AI Drafts to review.",
+      });
+      router.refresh();
+    });
+  }
+
+  function runRecreate() {
+    setFeedback(null);
+    startTransition(async () => {
+      const result = await recreateArticleAction(opportunity.id);
+      if (!result.success) {
+        setFeedback({
+          type: "error",
+          message: result.error ?? "Recreate failed",
+        });
+        return;
+      }
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+        return;
+      }
+      setFeedback({
+        type: "success",
+        message: "New draft generated.",
       });
       router.refresh();
     });
@@ -165,12 +193,31 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
             </>
           )}
           {hasDraft && opportunity.aiDraftId && (
-            <Link
-              href={`/admin/drafts/${opportunity.aiDraftId}`}
-              className={cn(buttonVariants({ variant: "default", size: "sm" }))}
-            >
-              Review Draft
-            </Link>
+            <>
+              <Link
+                href={`/admin/drafts/${opportunity.aiDraftId}`}
+                className={cn(buttonVariants({ variant: "default", size: "sm" }))}
+              >
+                Review Draft
+              </Link>
+              {canRecreate && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={runRecreate}
+                  className="gap-1.5 border-white/10"
+                >
+                  {pending ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="size-3.5" />
+                  )}
+                  {pending ? "Regenerating…" : "Recreate"}
+                </Button>
+              )}
+            </>
           )}
           {opportunity.workspaceId && (
             <Link

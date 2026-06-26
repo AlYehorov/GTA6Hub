@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/auth/admin";
 import { generateArticleFromOpportunity } from "@/lib/opportunity-engine/article-generator";
+import { deleteDraftAdmin } from "@/lib/drafts/delete-draft";
+import { getDraftByIdAdmin } from "@/lib/drafts/queries";
 import { findOpportunityById } from "@/lib/opportunity-engine/loader";
 import { upsertOpportunityStatus } from "@/lib/opportunity-engine/queries";
 import { sendOpportunityToWorkflow } from "@/lib/opportunity-engine/workflow-bridge";
@@ -39,6 +41,53 @@ export async function generateArticleAction(opportunityId: string): Promise<{
     return {
       success: false,
       error: err instanceof Error ? err.message : "Article generation failed",
+    };
+  }
+}
+
+export async function recreateArticleAction(opportunityId: string): Promise<{
+  success: boolean;
+  draftId?: string;
+  redirectTo?: string;
+  error?: string;
+}> {
+  try {
+    await requireAdminUser();
+  } catch {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const opportunity = await findOpportunityById(opportunityId);
+    if (!opportunity) return { success: false, error: "Opportunity not found" };
+
+    if (opportunity.aiDraftId) {
+      const existing = await getDraftByIdAdmin(opportunity.aiDraftId);
+      if (existing?.status === "published") {
+        return { success: false, error: "This draft is already published — edit the live article instead" };
+      }
+      if (existing?.status === "approved") {
+        return {
+          success: false,
+          error: "Reject or publish the approved draft before recreating",
+        };
+      }
+      if (existing) {
+        await deleteDraftAdmin(opportunity.aiDraftId);
+      }
+    }
+
+    const { draftId } = await generateArticleFromOpportunity(opportunityId);
+    revalidateEditor();
+    return {
+      success: true,
+      draftId,
+      redirectTo: `/admin/drafts/${draftId}`,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Recreate failed",
     };
   }
 }

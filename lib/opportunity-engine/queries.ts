@@ -74,6 +74,18 @@ export async function upsertOpportunityStatus(input: {
   if (error) throw new Error(error.message);
 }
 
+export async function resetOpportunityByClusterKey(clusterKey: string): Promise<void> {
+  if (!isSupabaseAdminConfigured()) return;
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("editorial_opportunities")
+    .update({ status: "open", ai_draft_id: null })
+    .eq("cluster_key", clusterKey);
+
+  if (error) throw new Error(error.message);
+}
+
 export async function getOpportunityDraftLinksFromAiDrafts(): Promise<
   Map<string, { aiDraftId: string; status: OpportunityStatus }>
 > {

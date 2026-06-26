@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/auth/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { getDraftByIdAdmin } from "@/lib/drafts/queries";
+import { deleteDraftAdmin } from "@/lib/drafts/delete-draft";
 import { aiDraftService } from "@/lib/ai/ai-draft-service";
 import { articlePublishingService } from "@/lib/workflows/article-publishing-service";
 import {
@@ -18,6 +19,7 @@ export interface ActionResult {
   success: boolean;
   error?: string;
   articleSlug?: string;
+  redirectTo?: string;
 }
 
 function revalidateDraftPaths(id: string) {
@@ -25,6 +27,8 @@ function revalidateDraftPaths(id: string) {
   revalidatePath(`/admin/drafts/${id}`);
   revalidatePath("/admin/dashboard");
   revalidatePath("/admin/editorial");
+  revalidatePath("/admin/editor");
+  revalidatePath("/admin/content-engine");
   revalidatePath("/admin");
   revalidatePath("/news");
   revalidatePath("/newsroom");
@@ -91,6 +95,32 @@ export async function rejectDraft(id: string): Promise<ActionResult> {
     return {
       success: false,
       error: err instanceof Error ? err.message : "Reject failed",
+    };
+  }
+}
+
+export async function deleteDraft(id: string): Promise<ActionResult> {
+  try {
+    await requireAdminUser();
+  } catch {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: "Supabase admin is not configured" };
+  }
+
+  try {
+    const { opportunityClusterKey } = await deleteDraftAdmin(id);
+    revalidateDraftPaths(id);
+    return {
+      success: true,
+      redirectTo: opportunityClusterKey ? "/admin/editor" : "/admin/drafts",
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Delete failed",
     };
   }
 }
