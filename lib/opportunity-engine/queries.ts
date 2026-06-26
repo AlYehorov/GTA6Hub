@@ -86,6 +86,28 @@ export async function resetOpportunityByClusterKey(clusterKey: string): Promise<
   if (error) throw new Error(error.message);
 }
 
+export async function getClusterKeyForDraft(draftId: string): Promise<string | null> {
+  if (!isSupabaseAdminConfigured()) return null;
+
+  const supabase = createAdminClient();
+  const { data: draft } = await supabase
+    .from("ai_drafts")
+    .select("opportunity_cluster_key")
+    .eq("id", draftId)
+    .maybeSingle();
+
+  const fromDraft = (draft?.opportunity_cluster_key as string | null) ?? null;
+  if (fromDraft) return fromDraft;
+
+  const { data: opportunity } = await supabase
+    .from("editorial_opportunities")
+    .select("cluster_key")
+    .eq("ai_draft_id", draftId)
+    .maybeSingle();
+
+  return (opportunity?.cluster_key as string | null) ?? null;
+}
+
 export async function getOpportunityDraftLinksFromAiDrafts(): Promise<
   Map<string, { aiDraftId: string; status: OpportunityStatus }>
 > {

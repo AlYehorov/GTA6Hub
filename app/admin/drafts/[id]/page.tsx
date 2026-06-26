@@ -25,11 +25,7 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
       <PageHeader title="Review Draft" description={draft.title} />
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-wrap items-center gap-3">
-          <DraftReviewActions
-            draftId={draft.id}
-            status={draft.status}
-            opportunityClusterKey={draft.opportunity_cluster_key}
-          />
+          <DraftReviewActions draftId={draft.id} status={draft.status} />
         </div>
 
         <div className="mb-8 grid gap-4 sm:grid-cols-4">

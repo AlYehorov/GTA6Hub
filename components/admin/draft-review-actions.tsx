@@ -12,17 +12,15 @@ import type { AiDraftStatus } from "@/lib/types/ai-draft";
 interface DraftReviewActionsProps {
   draftId: string;
   status: AiDraftStatus;
-  opportunityClusterKey?: string | null;
 }
 
 export function DraftReviewActions({
   draftId,
   status,
-  opportunityClusterKey,
 }: DraftReviewActionsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const canRegenerate = Boolean(opportunityClusterKey);
+  const canRegenerate = status === "pending" || status === "rejected";
   const canDelete = status === "pending" || status === "rejected";
 
   function run(action: () => Promise<{ success: boolean; error?: string; articleSlug?: string; redirectTo?: string }>) {

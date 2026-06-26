@@ -6,7 +6,7 @@ import { generateArticleFromOpportunity } from "@/lib/opportunity-engine/article
 import { deleteDraftAdmin } from "@/lib/drafts/delete-draft";
 import { getDraftByIdAdmin } from "@/lib/drafts/queries";
 import { findOpportunityById, findOpportunityByClusterKey } from "@/lib/opportunity-engine/loader";
-import { upsertOpportunityStatus } from "@/lib/opportunity-engine/queries";
+import { upsertOpportunityStatus, getClusterKeyForDraft } from "@/lib/opportunity-engine/queries";
 import { sendOpportunityToWorkflow } from "@/lib/opportunity-engine/workflow-bridge";
 
 const PATHS = ["/admin/editor", "/admin/content-engine", "/admin/drafts", "/admin/workflow"];
@@ -118,11 +118,14 @@ export async function regenerateFromDraftAction(draftId: string): Promise<{
       };
     }
 
-    const clusterKey = draft.opportunity_cluster_key;
+    const clusterKey =
+      draft.opportunity_cluster_key ?? (await getClusterKeyForDraft(draftId));
     if (!clusterKey) {
+      await deleteDraftAdmin(draftId);
+      revalidateEditor();
       return {
-        success: false,
-        error: "This draft is not linked to Editor-in-Chief — delete it manually",
+        success: true,
+        redirectTo: "/admin/editor",
       };
     }
 
