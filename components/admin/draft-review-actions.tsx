@@ -3,19 +3,27 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Loader2, X, Send, Trash2 } from "lucide-react";
+import { Check, Loader2, X, Send, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { approveDraft, rejectDraft, publishDraft, deleteDraft } from "@/lib/actions/drafts";
+import { regenerateFromDraftAction } from "@/lib/actions/editor";
 import type { AiDraftStatus } from "@/lib/types/ai-draft";
 
 interface DraftReviewActionsProps {
   draftId: string;
   status: AiDraftStatus;
+  opportunityClusterKey?: string | null;
 }
 
-export function DraftReviewActions({ draftId, status }: DraftReviewActionsProps) {
+export function DraftReviewActions({
+  draftId,
+  status,
+  opportunityClusterKey,
+}: DraftReviewActionsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const canRegenerate = Boolean(opportunityClusterKey);
+  const canDelete = status === "pending" || status === "rejected";
 
   function run(action: () => Promise<{ success: boolean; error?: string; articleSlug?: string; redirectTo?: string }>) {
     startTransition(async () => {
@@ -37,6 +45,22 @@ export function DraftReviewActions({ draftId, status }: DraftReviewActionsProps)
     run(() => deleteDraft(draftId));
   }
 
+  function runRegenerate() {
+    if (!confirm("Generate a new draft? The current version will be replaced.")) return;
+    startTransition(async () => {
+      const result = await regenerateFromDraftAction(draftId);
+      if (!result.success) {
+        alert(result.error ?? "Regenerate failed");
+        return;
+      }
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   if (status === "published") {
     return (
       <p className="text-sm text-emerald-400">
@@ -51,17 +75,29 @@ export function DraftReviewActions({ draftId, status }: DraftReviewActionsProps)
 
   if (status === "rejected") {
     return (
-      <div className="flex flex-wrap gap-3">
-        <p className="text-sm text-white/40">This draft was rejected.</p>
-        <Button
-          disabled={isPending}
-          variant="outline"
-          onClick={runDelete}
-          className="gap-2 border-white/10 text-white/60 hover:bg-white/5"
-        >
-          {isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-          Delete
-        </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="text-sm text-white/50">This draft was rejected.</p>
+        {canRegenerate && (
+          <Button
+            disabled={isPending}
+            onClick={runRegenerate}
+            className="gap-2 bg-gta-pink text-white hover:bg-gta-pink/90"
+          >
+            {isPending ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />}
+            Regenerate
+          </Button>
+        )}
+        {canDelete && (
+          <Button
+            disabled={isPending}
+            variant="outline"
+            onClick={runDelete}
+            className="gap-2 border-white/15 text-white/70 hover:bg-white/5"
+          >
+            <Trash2 className="size-4" />
+            Delete
+          </Button>
+        )}
       </div>
     );
   }
@@ -87,11 +123,21 @@ export function DraftReviewActions({ draftId, status }: DraftReviewActionsProps)
             <X className="size-4" />
             Reject
           </Button>
+          {canRegenerate && (
+            <Button
+              disabled={isPending}
+              onClick={runRegenerate}
+              className="gap-2 bg-gta-pink text-white hover:bg-gta-pink/90"
+            >
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />}
+              Regenerate
+            </Button>
+          )}
           <Button
             disabled={isPending}
             variant="outline"
             onClick={runDelete}
-            className="gap-2 border-white/10 text-white/60 hover:bg-white/5"
+            className="gap-2 border-white/15 text-white/70 hover:bg-white/5"
           >
             <Trash2 className="size-4" />
             Delete

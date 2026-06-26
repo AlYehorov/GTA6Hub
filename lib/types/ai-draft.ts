@@ -15,6 +15,7 @@ export interface AiDraft {
   confidence: number;
   status: AiDraftStatus;
   published_article_id: string | null;
+  opportunity_cluster_key?: string | null;
   created_at: string;
 }
 

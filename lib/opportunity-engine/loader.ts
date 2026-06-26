@@ -243,3 +243,9 @@ export async function findOpportunityById(
   const data = await loadEditorBriefing();
   return data.opportunities.find((o) => o.id === opportunityId) ?? null;
 }
+
+export async function findOpportunityByClusterKey(
+  clusterKey: string
+): Promise<import("@/lib/opportunity-engine/types").EditorialOpportunity | null> {
+  return findOpportunityById(`opp-${clusterKey}`);
+}

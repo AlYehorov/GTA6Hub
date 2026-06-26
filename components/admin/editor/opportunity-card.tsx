@@ -32,10 +32,8 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
 
   const hasDraft =
     opportunity.status === "draft_generated" || Boolean(opportunity.aiDraftId);
-  const canRecreate =
-    hasDraft &&
-    opportunity.status !== "workflow_sent" &&
-    opportunity.status !== "ignored";
+  const showRecreate =
+    Boolean(opportunity.aiDraftId) && opportunity.status !== "workflow_sent";
 
   function runGenerate() {
     setFeedback(null);
@@ -193,21 +191,20 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
             </>
           )}
           {hasDraft && opportunity.aiDraftId && (
-            <>
+            <div className="flex min-w-[9.5rem] shrink-0 flex-col gap-2">
               <Link
                 href={`/admin/drafts/${opportunity.aiDraftId}`}
                 className={cn(buttonVariants({ variant: "default", size: "sm" }))}
               >
                 Review Draft
               </Link>
-              {canRecreate && (
+              {showRecreate && (
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
                   disabled={pending}
                   onClick={runRecreate}
-                  className="gap-1.5 border-white/10"
+                  className="gap-1.5 bg-gta-pink text-white hover:bg-gta-pink/90"
                 >
                   {pending ? (
                     <Loader2 className="size-3.5 animate-spin" />
@@ -217,7 +214,7 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
                   {pending ? "Regenerating…" : "Recreate"}
                 </Button>
               )}
-            </>
+            </div>
           )}
           {opportunity.workspaceId && (
             <Link

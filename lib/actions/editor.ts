@@ -5,7 +5,7 @@ import { requireAdminUser } from "@/lib/auth/admin";
 import { generateArticleFromOpportunity } from "@/lib/opportunity-engine/article-generator";
 import { deleteDraftAdmin } from "@/lib/drafts/delete-draft";
 import { getDraftByIdAdmin } from "@/lib/drafts/queries";
-import { findOpportunityById } from "@/lib/opportunity-engine/loader";
+import { findOpportunityById, findOpportunityByClusterKey } from "@/lib/opportunity-engine/loader";
 import { upsertOpportunityStatus } from "@/lib/opportunity-engine/queries";
 import { sendOpportunityToWorkflow } from "@/lib/opportunity-engine/workflow-bridge";
 
@@ -88,6 +88,66 @@ export async function recreateArticleAction(opportunityId: string): Promise<{
     return {
       success: false,
       error: err instanceof Error ? err.message : "Recreate failed",
+    };
+  }
+}
+
+export async function regenerateFromDraftAction(draftId: string): Promise<{
+  success: boolean;
+  draftId?: string;
+  redirectTo?: string;
+  error?: string;
+}> {
+  try {
+    await requireAdminUser();
+  } catch {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const draft = await getDraftByIdAdmin(draftId);
+    if (!draft) return { success: false, error: "Draft not found" };
+
+    if (draft.status === "published") {
+      return { success: false, error: "This draft is already published" };
+    }
+    if (draft.status === "approved") {
+      return {
+        success: false,
+        error: "Reject the approved draft before regenerating",
+      };
+    }
+
+    const clusterKey = draft.opportunity_cluster_key;
+    if (!clusterKey) {
+      return {
+        success: false,
+        error: "This draft is not linked to Editor-in-Chief — delete it manually",
+      };
+    }
+
+    await deleteDraftAdmin(draftId);
+
+    const opportunity = await findOpportunityByClusterKey(clusterKey);
+    if (!opportunity) {
+      revalidateEditor();
+      return {
+        success: true,
+        redirectTo: "/admin/editor",
+      };
+    }
+
+    const { draftId: newDraftId } = await generateArticleFromOpportunity(opportunity.id);
+    revalidateEditor();
+    return {
+      success: true,
+      draftId: newDraftId,
+      redirectTo: `/admin/drafts/${newDraftId}`,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Regenerate failed",
     };
   }
 }
