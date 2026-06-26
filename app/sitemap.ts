@@ -6,7 +6,9 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 const STATIC_ROUTES = [
   "",
   "/news",
+  "/newsroom",
   "/guides",
+  "/videos",
   "/search",
   "/characters",
   "/vehicles",
@@ -101,5 +103,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return [...staticEntries, ...trackerEntries, ...articleEntries, ...entityEntries];
+  const { data: videos } = await supabase
+    .from("videos")
+    .select("slug, updated_at, published_at")
+    .eq("status", "published");
+
+  const videoEntries: MetadataRoute.Sitemap = (videos ?? []).map((v) => ({
+    url: `${base}/videos/${v.slug}`,
+    lastModified: new Date(v.updated_at ?? v.published_at ?? now),
+    changeFrequency: "weekly",
+    priority: 0.75,
+  }));
+
+  return [...staticEntries, ...trackerEntries, ...articleEntries, ...videoEntries, ...entityEntries];
 }

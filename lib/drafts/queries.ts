@@ -58,7 +58,7 @@ export async function getDraftByIdAdmin(id: string): Promise<AiDraftWithSource |
     .from("ai_drafts")
     .select(`
       *,
-      source_item:source_items(id, source, source_type, source_label, source_url, title, published_at)
+      source_item:source_items(id, source, source_type, source_label, source_url, external_id, title, published_at)
     `)
     .eq("id", id)
     .single();

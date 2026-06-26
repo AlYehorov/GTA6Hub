@@ -36,6 +36,7 @@ export interface AiDraftWithSource extends AiDraft {
     source_type: string;
     source_label: SourceLabel;
     source_url: string;
+    external_id: string;
     title: string;
     published_at: string | null;
   };

@@ -1,3 +1,6 @@
+import type { SourceLabel } from "@/lib/types/source";
+import type { EditorialLabel } from "@/lib/newsroom/labels";
+
 export type ArticleStatus = "draft" | "published";
 export type ArticleType = "news" | "guide";
 
@@ -30,6 +33,11 @@ export interface Article {
   seo_title: string | null;
   seo_description: string | null;
   published_at: string | null;
+  source_label: SourceLabel | null;
+  source_url: string | null;
+  source_item_id: string | null;
+  video_id: string | null;
+  ai_confidence: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,5 +71,9 @@ export interface ArticleListItem {
   type: ArticleType;
   reading_time_minutes: number;
   published_at: string | null;
+  source_label: SourceLabel | null;
+  source_url: string | null;
+  ai_confidence: number | null;
+  editorial_label: EditorialLabel;
   category: Pick<Category, "name" | "slug"> | null;
 }

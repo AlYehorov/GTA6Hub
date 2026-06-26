@@ -42,7 +42,7 @@ export function HeroSection() {
             Explore News
           </Link>
           <Link
-            href="/trailers"
+            href="/videos"
             className={cn(
               buttonVariants({ variant: "outline", size: "lg" }),
               "h-11 gap-2 border-white/20 bg-white/5 px-7 text-sm text-white backdrop-blur-sm hover:bg-white/10"

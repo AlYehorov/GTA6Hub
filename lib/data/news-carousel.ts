@@ -36,8 +36,8 @@ export function articlesToCarouselItems(articles: ArticleListItem[]): CarouselIt
     id: article.id,
     title: article.title,
     subtitle: article.excerpt ?? "",
-    href: `/news/${article.slug}`,
-    tag: article.category?.name ?? "News",
+    href: article.type === "guide" ? `/guides/${article.slug}` : `/news/${article.slug}`,
+    tag: article.editorial_label ?? article.category?.name ?? "News",
     image: article.hero_image_url ?? NEWS_IMAGES[index % NEWS_IMAGES.length],
     variant: index === 0 ? "hero" : NEWS_VARIANTS[index - 1] ?? "landscape",
   }));

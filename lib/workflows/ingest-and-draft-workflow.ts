@@ -1,6 +1,7 @@
 import { sourceIngestionService } from "@/lib/sources/source-ingestion-service";
 import { aiDraftService } from "@/lib/ai/ai-draft-service";
-import type { SourcePlatform } from "@/lib/types/source";
+import { upsertVideoFromYoutubeSource } from "@/lib/videos/queries";
+import type { SourceItem, SourcePlatform } from "@/lib/types/source";
 import { getConnector } from "@/lib/sources/registry";
 
 export interface WorkflowResult {
@@ -32,6 +33,7 @@ export class IngestAndDraftWorkflow {
 
       for (const source of ingestion.items) {
         try {
+          await this.prepareSourceSideEffects(source);
           await aiDraftService.createDraft(source);
           await sourceIngestionService.markProcessed(source.id);
           result.draftsCreated++;
@@ -73,6 +75,7 @@ export class IngestAndDraftWorkflow {
 
     for (const source of unprocessed) {
       try {
+        await this.prepareSourceSideEffects(source);
         await aiDraftService.createDraft(source);
         await sourceIngestionService.markProcessed(source.id);
         result.draftsCreated++;
@@ -104,6 +107,7 @@ export class IngestAndDraftWorkflow {
 
       for (const source of ingestion.items) {
         try {
+          await this.prepareSourceSideEffects(source);
           await aiDraftService.createDraft(source);
           await sourceIngestionService.markProcessed(source.id);
           result.draftsCreated++;
@@ -118,6 +122,22 @@ export class IngestAndDraftWorkflow {
     }
 
     return result;
+  }
+
+  private async prepareSourceSideEffects(source: SourceItem): Promise<void> {
+    if (source.source_type !== "youtube_video" || source.source !== "rockstar_youtube") {
+      return;
+    }
+
+    await upsertVideoFromYoutubeSource({
+      title: source.title,
+      youtube_id: source.external_id,
+      description: source.content,
+      source_url: source.source_url,
+      source_item_id: source.id,
+      published_at: source.published_at,
+      autoPublish: true,
+    });
   }
 }
 

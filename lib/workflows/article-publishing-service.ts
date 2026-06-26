@@ -1,8 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { calculateReadingTime, slugify } from "@/lib/utils/article";
+import { getVideoBySourceItemId } from "@/lib/videos/queries";
 import type { AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { ArticleType } from "@/lib/types/article";
+import type { SourceLabel } from "@/lib/types/source";
 
 export interface PublishResult {
   articleId: string;
@@ -32,6 +34,20 @@ export class ArticlePublishingService {
     const categoryId = await this.resolveCategoryId(draft.category);
     const tagIds = await this.resolveTagIds(draft.suggested_tags);
     const now = new Date().toISOString();
+    const source = draft.source_item;
+
+    let videoId: string | null = null;
+    let heroImageUrl: string | null = null;
+
+    if (source.source_type === "youtube_video") {
+      const video = await getVideoBySourceItemId(source.id);
+      if (video) {
+        videoId = video.id;
+        heroImageUrl = `https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`;
+      } else if (source.external_id) {
+        heroImageUrl = `https://img.youtube.com/vi/${source.external_id}/maxresdefault.jpg`;
+      }
+    }
 
     const { data: article, error } = await supabase
       .from("articles")
@@ -40,7 +56,7 @@ export class ArticlePublishingService {
         slug,
         excerpt: draft.excerpt,
         content: draft.content,
-        hero_image_url: null,
+        hero_image_url: heroImageUrl,
         status: "published",
         type,
         reading_time_minutes: calculateReadingTime(draft.content),
@@ -48,6 +64,11 @@ export class ArticlePublishingService {
         seo_title: draft.seo_title,
         seo_description: draft.seo_description,
         published_at: now,
+        source_label: source.source_label as SourceLabel,
+        source_url: source.source_url,
+        source_item_id: source.id,
+        video_id: videoId,
+        ai_confidence: draft.confidence,
       })
       .select("id, slug, type")
       .single();

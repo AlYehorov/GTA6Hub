@@ -1,8 +1,9 @@
 export const MAIN_NAV_ITEMS = [
   { label: "Home", href: "/" },
+  { label: "Newsroom", href: "/newsroom" },
   { label: "News", href: "/news" },
+  { label: "Videos", href: "/videos" },
   { label: "Guides", href: "/guides" },
-  { label: "Trailers", href: "/trailers" },
   { label: "Characters", href: "/characters" },
   { label: "Vehicles", href: "/vehicles" },
   { label: "Map", href: "/map" },

@@ -22,9 +22,12 @@ export interface ActionResult {
 function revalidateDraftPaths(id: string) {
   revalidatePath("/admin/drafts");
   revalidatePath(`/admin/drafts/${id}`);
+  revalidatePath("/admin/editorial");
   revalidatePath("/admin");
   revalidatePath("/news");
+  revalidatePath("/newsroom");
   revalidatePath("/guides");
+  revalidatePath("/videos");
 }
 
 export async function approveDraft(id: string): Promise<ActionResult> {
