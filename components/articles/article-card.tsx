@@ -1,4 +1,5 @@
-import Image from "next/image";
+import { SafeArticleImage } from "@/components/articles/safe-article-image";
+import { polishPublicExcerpt } from "@/lib/editorial/sanitize";
 import Link from "next/link";
 import { Clock, ArrowUpRight } from "lucide-react";
 import { formatDate } from "@/lib/utils/format-date";
@@ -28,17 +29,12 @@ export function ArticleCard({ article, type, featured }: ArticleCardProps) {
           featured ? "aspect-[21/9] min-h-[220px]" : "aspect-[16/10]"
         )}
       >
-        {article.hero_image_url ? (
-          <Image
-            src={article.hero_image_url}
-            alt={article.title}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-            sizes={featured ? "100vw" : "(max-width:768px) 100vw, 400px"}
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-950" />
-        )}
+        <SafeArticleImage
+          src={article.hero_image_url}
+          seed={article.slug}
+          alt={article.title}
+          featured={featured}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
       </div>
 
@@ -65,9 +61,9 @@ export function ArticleCard({ article, type, featured }: ArticleCardProps) {
           {article.title}
         </h2>
 
-        {article.excerpt && (
+        {polishPublicExcerpt(article.excerpt, article.title) && (
           <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/50 sm:text-base">
-            {article.excerpt}
+            {polishPublicExcerpt(article.excerpt, article.title)}
           </p>
         )}
 

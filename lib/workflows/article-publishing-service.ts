@@ -2,7 +2,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { calculateReadingTime, slugify } from "@/lib/utils/article";
 import { getVideoBySourceItemId } from "@/lib/videos/queries";
+import { sanitizeArticleContent, sanitizeArticleExcerpt } from "@/lib/editorial/sanitize";
 import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
+import { normalizeYouTubeThumbnail, resolveHeroImageForArticle } from "@/lib/articles/resolve-hero-image";
 import type { AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { ArticleType } from "@/lib/types/article";
 import type { SourceLabel } from "@/lib/types/source";
@@ -48,9 +50,9 @@ export class ArticlePublishingService {
       const video = await getVideoBySourceItemId(source.id);
       if (video) {
         videoId = video.id;
-        heroImageUrl = `https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`;
+        heroImageUrl = `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`;
       } else if (source.external_id) {
-        heroImageUrl = `https://img.youtube.com/vi/${source.external_id}/maxresdefault.jpg`;
+        heroImageUrl = `https://img.youtube.com/vi/${source.external_id}/hqdefault.jpg`;
       }
     }
 
@@ -59,9 +61,11 @@ export class ArticlePublishingService {
       .insert({
         title: draft.title,
         slug,
-        excerpt: draft.excerpt,
-        content: draft.content,
-        hero_image_url: heroImageUrl,
+        excerpt: sanitizeArticleExcerpt(draft.excerpt),
+        content: sanitizeArticleContent(draft.content),
+        hero_image_url: heroImageUrl
+          ? normalizeYouTubeThumbnail(heroImageUrl)
+          : resolveHeroImageForArticle(null, slug),
         status: "published",
         type,
         reading_time_minutes: calculateReadingTime(draft.content),

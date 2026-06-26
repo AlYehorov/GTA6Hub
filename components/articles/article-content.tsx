@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { sanitizeArticleContent } from "@/lib/editorial/sanitize";
 
 interface ArticleContentProps {
   content: string;
@@ -8,7 +9,9 @@ interface ArticleContentProps {
 export function ArticleContent({ content }: ArticleContentProps) {
   return (
     <article className="article-prose mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {sanitizeArticleContent(content)}
+      </ReactMarkdown>
     </article>
   );
 }

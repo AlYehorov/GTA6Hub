@@ -102,11 +102,6 @@ export async function ArticlePage({ slug, type }: { slug: string; type: ArticleT
         <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs text-white/60">
           {editorialLabel}
         </span>
-        {article.ai_confidence != null && (
-          <span className="text-xs text-white/35">
-            AI-assisted · {Math.round(article.ai_confidence * 100)}% confidence
-          </span>
-        )}
         <SaveArticleButton articleId={article.id} initialSaved={saved} />
       </div>
       <ArticleContent content={article.content} />

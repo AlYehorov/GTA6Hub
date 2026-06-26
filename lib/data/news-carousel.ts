@@ -1,4 +1,6 @@
 import { GTA6_IMAGES } from "@/lib/constants/images";
+import { resolveHeroImageForArticle } from "@/lib/articles/resolve-hero-image";
+import { polishPublicExcerpt } from "@/lib/editorial/sanitize";
 import type { NewsArticle } from "@/lib/types";
 import type { ArticleListItem } from "@/lib/types/article";
 import type { CarouselItem, CardVariant } from "@/lib/types";
@@ -35,10 +37,10 @@ export function articlesToCarouselItems(articles: ArticleListItem[]): CarouselIt
   return articles.map((article, index) => ({
     id: article.id,
     title: article.title,
-    subtitle: article.excerpt ?? "",
+    subtitle: polishPublicExcerpt(article.excerpt, article.title) ?? "",
     href: article.type === "guide" ? `/guides/${article.slug}` : `/news/${article.slug}`,
     tag: article.editorial_label ?? article.category?.name ?? "News",
-    image: article.hero_image_url ?? NEWS_IMAGES[index % NEWS_IMAGES.length],
+    image: resolveHeroImageForArticle(article.hero_image_url, article.slug),
     variant: index === 0 ? "hero" : NEWS_VARIANTS[index - 1] ?? "landscape",
   }));
 }

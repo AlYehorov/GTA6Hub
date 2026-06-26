@@ -1,6 +1,5 @@
 import type { SourceItem } from "@/lib/types/source";
 import type { AiGeneratedArticle } from "@/lib/types/ai-draft";
-import { slugify } from "@/lib/utils/article";
 import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
 
 /**
@@ -14,7 +13,7 @@ export function generateMockDraft(source: SourceItem): AiGeneratedArticle {
   const confidence = inferConfidence(source);
 
   const title = buildTitle(source);
-  const excerpt = buildExcerpt(source, platformLabel);
+  const excerpt = buildExcerpt(source);
   const content = buildContent(source, platformLabel);
   const seo_title = `${title} | GTA6Hub`.slice(0, 60);
   const seo_description = excerpt.slice(0, 155);
@@ -94,12 +93,12 @@ function buildTitle(source: SourceItem): string {
   return base.slice(0, 77) + "...";
 }
 
-function buildExcerpt(source: SourceItem, platformLabel: string): string {
-  return `Based on ${platformLabel}: ${source.content.slice(0, 200).trim()}${source.content.length > 200 ? "..." : ""}`;
+function buildExcerpt(source: SourceItem): string {
+  const snippet = source.content.replace(/\s+/g, " ").trim().slice(0, 180);
+  return snippet.length > 0 ? `${snippet}${source.content.length > 180 ? "…" : ""}` : source.title;
 }
 
 function buildContent(source: SourceItem, platformLabel: string): string {
-  const slug = slugify(source.title);
   const labelNote =
     source.source_label === "official"
       ? "official Rockstar channel"
@@ -125,8 +124,5 @@ This development adds to the growing picture of Leonida ahead of launch. Vice Ci
 
 ## What's Next
 
-We'll continue tracking this story and update our [news hub](/news) as official details emerge.
-
----
-*Draft generated from source \`${slug}\`. Requires human review before publishing.*`;
+We'll continue tracking this story and update our [news hub](/news) as official details emerge.`;
 }

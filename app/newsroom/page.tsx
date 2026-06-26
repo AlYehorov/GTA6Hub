@@ -41,7 +41,7 @@ export default async function NewsroomPage() {
       <div className="mx-auto max-w-7xl space-y-14 px-4 py-12 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-white/45">
-            Human-reviewed coverage. AI-assisted drafts are never auto-published.
+            Official updates, trailer analysis, and community coverage for GTA VI.
           </p>
           <AmbientToggle />
         </div>
