@@ -86,18 +86,26 @@ export async function resetOpportunityByClusterKey(clusterKey: string): Promise<
   if (error) throw new Error(error.message);
 }
 
+export async function resetOpportunityByDraftId(draftId: string): Promise<void> {
+  if (!isSupabaseAdminConfigured()) return;
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("editorial_opportunities")
+    .update({ status: "open", ai_draft_id: null })
+    .eq("ai_draft_id", draftId);
+
+  if (error) throw new Error(error.message);
+}
+
+function isMissingOpportunityClusterColumn(message: string | undefined): boolean {
+  return Boolean(message?.includes("opportunity_cluster_key"));
+}
+
 export async function getClusterKeyForDraft(draftId: string): Promise<string | null> {
   if (!isSupabaseAdminConfigured()) return null;
 
   const supabase = createAdminClient();
-  const { data: draft } = await supabase
-    .from("ai_drafts")
-    .select("opportunity_cluster_key")
-    .eq("id", draftId)
-    .maybeSingle();
-
-  const fromDraft = (draft?.opportunity_cluster_key as string | null) ?? null;
-  if (fromDraft) return fromDraft;
 
   const { data: opportunity } = await supabase
     .from("editorial_opportunities")
@@ -105,7 +113,21 @@ export async function getClusterKeyForDraft(draftId: string): Promise<string | n
     .eq("ai_draft_id", draftId)
     .maybeSingle();
 
-  return (opportunity?.cluster_key as string | null) ?? null;
+  const fromOpportunity = (opportunity?.cluster_key as string | null) ?? null;
+  if (fromOpportunity) return fromOpportunity;
+
+  const { data: draft, error } = await supabase
+    .from("ai_drafts")
+    .select("opportunity_cluster_key")
+    .eq("id", draftId)
+    .maybeSingle();
+
+  if (error && isMissingOpportunityClusterColumn(error.message)) {
+    return null;
+  }
+  if (error) throw new Error(error.message);
+
+  return (draft?.opportunity_cluster_key as string | null) ?? null;
 }
 
 export async function getOpportunityDraftLinksFromAiDrafts(): Promise<
@@ -115,11 +137,16 @@ export async function getOpportunityDraftLinksFromAiDrafts(): Promise<
   if (!isSupabaseAdminConfigured()) return map;
 
   const supabase = createAdminClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("ai_drafts")
     .select("id, opportunity_cluster_key, status")
     .not("opportunity_cluster_key", "is", null)
     .order("created_at", { ascending: false });
+
+  if (error) {
+    if (isMissingOpportunityClusterColumn(error.message)) return map;
+    throw new Error(error.message);
+  }
 
   for (const row of data ?? []) {
     const key = row.opportunity_cluster_key as string;

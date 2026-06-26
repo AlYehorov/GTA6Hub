@@ -118,8 +118,7 @@ export async function regenerateFromDraftAction(draftId: string): Promise<{
       };
     }
 
-    const clusterKey =
-      draft.opportunity_cluster_key ?? (await getClusterKeyForDraft(draftId));
+    const clusterKey = await getClusterKeyForDraft(draftId);
     if (!clusterKey) {
       await deleteDraftAdmin(draftId);
       revalidateEditor();

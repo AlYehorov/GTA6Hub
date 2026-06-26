@@ -1,6 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
-import { resetOpportunityByClusterKey } from "@/lib/opportunity-engine/queries";
+import {
+  getClusterKeyForDraft,
+  resetOpportunityByClusterKey,
+  resetOpportunityByDraftId,
+} from "@/lib/opportunity-engine/queries";
 import type { AiDraftStatus } from "@/lib/types/ai-draft";
 
 const DELETABLE_STATUSES: AiDraftStatus[] = ["pending", "rejected"];
@@ -15,7 +19,7 @@ export async function deleteDraftAdmin(id: string): Promise<{
   const supabase = createAdminClient();
   const { data: draft, error: fetchError } = await supabase
     .from("ai_drafts")
-    .select("id, status, opportunity_cluster_key")
+    .select("id, status")
     .eq("id", id)
     .maybeSingle();
 
@@ -27,17 +31,19 @@ export async function deleteDraftAdmin(id: string): Promise<{
     throw new Error("Only pending or rejected drafts can be deleted");
   }
 
-  const clusterKey = (draft.opportunity_cluster_key as string | null) ?? null;
+  const clusterKey = await getClusterKeyForDraft(id);
 
   const { error: deleteError } = await supabase.from("ai_drafts").delete().eq("id", id);
   if (deleteError) throw new Error(deleteError.message);
 
-  if (clusterKey) {
-    try {
+  try {
+    if (clusterKey) {
       await resetOpportunityByClusterKey(clusterKey);
-    } catch {
-      // editorial_opportunities table may be missing
+    } else {
+      await resetOpportunityByDraftId(id);
     }
+  } catch {
+    // editorial_opportunities table may be missing
   }
 
   return { opportunityClusterKey: clusterKey };
