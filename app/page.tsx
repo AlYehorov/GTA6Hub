@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/home/hero-section";
 import { HomeNewsroomSections } from "@/components/home/home-newsroom-sections";
 import { TrackerSection } from "@/components/home/tracker-section";
 import { CommunitySection } from "@/components/home/community-section";
+import { CommunityHighlightsSection } from "@/components/home/community-highlights-section";
 import { ContentCarousel } from "@/components/home/content-carousel";
 import { HomeSectionFallback } from "@/components/home/home-section-fallback";
 import {
@@ -35,6 +36,10 @@ export default function HomePage() {
 
         <Suspense fallback={<HomeSectionFallback className="mt-8" />}>
           <TrackerSection />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <CommunityHighlightsSection />
         </Suspense>
 
         <Suspense fallback={null}>

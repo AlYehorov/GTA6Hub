@@ -25,6 +25,7 @@ function rowToProfile(row: Record<string, unknown>): Profile {
     xp: Number(row.xp ?? 0),
     level: Number(row.level ?? 1),
     favorite_category_id: (row.favorite_category_id as string | null) ?? null,
+    community_reputation: Number(row.community_reputation ?? 0),
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
   };

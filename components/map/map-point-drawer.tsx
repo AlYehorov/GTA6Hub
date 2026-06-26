@@ -2,6 +2,7 @@
 
 import { ExternalLink, X, BadgeCheck, EyeOff } from "lucide-react";
 import { SaveLocationButton } from "@/components/profile/save-location-button";
+import { MapSheetHandle } from "@/components/map/map-sheet-handle";
 import { cn } from "@/lib/utils";
 import type { MapPoint } from "@/lib/types/map-point";
 import { MAP_POINT_TYPE_LABELS } from "@/lib/types/map-point";
@@ -31,13 +32,14 @@ export function MapPointDrawer({ point, spoilerMode, onClose, locationSaved }: M
       <aside
         className={cn(
           "fixed z-50 flex flex-col border-white/10 bg-[#0a0a0a]/98 transition-transform duration-300 supports-[backdrop-filter]:bg-[#0a0a0a]/95 supports-[backdrop-filter]:backdrop-blur-xl",
-          "inset-x-0 bottom-0 max-h-[70vh] max-h-[70dvh] rounded-t-2xl border-t pb-safe lg:inset-y-0 lg:right-0 lg:left-auto lg:w-96 lg:max-h-none lg:rounded-none lg:border-l lg:border-t-0 lg:pb-0",
+          "inset-x-0 bottom-0 max-h-[min(85dvh,640px)] rounded-t-2xl border-t pb-safe lg:inset-y-0 lg:right-0 lg:left-auto lg:w-96 lg:max-h-none lg:rounded-none lg:border-l lg:border-t-0 lg:pb-0",
           point ? "translate-y-0 lg:translate-x-0" : "translate-y-full lg:translate-x-full"
         )}
       >
         {point ? (
           <>
-            <div className="flex items-start justify-between gap-3 border-b border-white/10 p-5">
+            <MapSheetHandle />
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3 sm:p-5">
               <div className="min-w-0 flex-1">
                 {hidden ? (
                   <div className="flex items-center gap-2 text-white/50">
@@ -45,7 +47,7 @@ export function MapPointDrawer({ point, spoilerMode, onClose, locationSaved }: M
                     <h2 className="font-heading text-lg font-semibold">Spoiler Location</h2>
                   </div>
                 ) : (
-                  <h2 className="font-heading text-lg font-semibold text-white">{point.title}</h2>
+                  <h2 className="font-heading text-base font-semibold text-white sm:text-lg">{point.title}</h2>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span
@@ -78,7 +80,7 @@ export function MapPointDrawer({ point, spoilerMode, onClose, locationSaved }: M
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
               {hidden ? (
                 <p className="text-sm leading-relaxed text-white/50">
                   This location contains potential spoilers. Enable spoiler mode to reveal details.

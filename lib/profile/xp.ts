@@ -39,9 +39,10 @@ export function xpProgressInLevel(xp: number): { current: number; max: number; p
 export async function awardXP(
   userId: string,
   amount: number,
-  _reason: XPReason
+  reason: XPReason
 ): Promise<{ xp: number; level: number; leveledUp: boolean } | null> {
   if (!isSupabaseAdminConfigured() || amount <= 0) return null;
+  void reason;
 
   const admin = createAdminClient();
   const { data: profile } = await admin

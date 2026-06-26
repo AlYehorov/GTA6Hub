@@ -10,6 +10,7 @@ import {
   getSavedLocations,
   getUserAchievements,
 } from "@/lib/profile/queries";
+import { getCommunityProfileStats, getUserCommunityPosts } from "@/lib/community/queries";
 import { createPageMetadata } from "@/lib/metadata";
 
 interface PublicProfilePageProps {
@@ -37,13 +38,15 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   if (!profile) notFound();
 
-  const [achievements, activity, savedArticles, savedLocations, categories] =
+  const [achievements, activity, savedArticles, savedLocations, categories, communityStats, communityPosts] =
     await Promise.all([
       getUserAchievements(profile.id),
       getActivityEvents(profile.id, 10),
       getSavedArticles(profile.id, 12),
       getSavedLocations(profile.id, 12),
       getCategoryBreakdown(profile.id),
+      getCommunityProfileStats(profile.id),
+      getUserCommunityPosts(profile.id, 6),
     ]);
 
   return (
@@ -59,6 +62,8 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
         savedArticles={savedArticles}
         savedLocations={savedLocations}
         categories={categories}
+        communityStats={communityStats}
+        communityPosts={communityPosts}
       />
     </>
   );

@@ -23,6 +23,7 @@ export interface ActionResult {
 function revalidateDraftPaths(id: string) {
   revalidatePath("/admin/drafts");
   revalidatePath(`/admin/drafts/${id}`);
+  revalidatePath("/admin/dashboard");
   revalidatePath("/admin/editorial");
   revalidatePath("/admin");
   revalidatePath("/news");

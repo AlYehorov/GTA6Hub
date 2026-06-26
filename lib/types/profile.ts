@@ -7,6 +7,7 @@ export interface Profile {
   xp: number;
   level: number;
   favorite_category_id: string | null;
+  community_reputation: number;
   created_at: string;
   updated_at: string;
 }

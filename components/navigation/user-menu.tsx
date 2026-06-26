@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bookmark, LogOut, Map, User } from "lucide-react";
+import { Bookmark, Bell, LogOut, Map, User, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { signOut } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
@@ -85,6 +85,12 @@ export function UserMenu() {
             <p className="border-b border-white/10 px-4 py-2 text-xs text-white/40">@{username}</p>
             <MenuLink href="/profile" icon={<User className="size-4" />} onClick={() => setOpen(false)}>
               Profile
+            </MenuLink>
+            <MenuLink href="/community" icon={<Users className="size-4" />} onClick={() => setOpen(false)}>
+              Community
+            </MenuLink>
+            <MenuLink href="/notifications" icon={<Bell className="size-4" />} onClick={() => setOpen(false)}>
+              Notifications
             </MenuLink>
             <MenuLink
               href="/profile#saved-articles"

@@ -18,6 +18,8 @@ import type {
   SavedLocation,
   UserAchievement,
 } from "@/lib/types/profile";
+import type { CommunityPost, CommunityProfileStats } from "@/lib/types/community";
+import { CommunityProfileSection } from "@/components/profile/community-profile-section";
 
 interface ProfileViewProps {
   profile: ProfileWithStats;
@@ -26,6 +28,8 @@ interface ProfileViewProps {
   savedArticles: SavedArticle[];
   savedLocations: SavedLocation[];
   categories: Awaited<ReturnType<typeof import("@/lib/profile/queries").getCategoryBreakdown>>;
+  communityStats?: CommunityProfileStats;
+  communityPosts?: CommunityPost[];
   isOwner?: boolean;
 }
 
@@ -48,6 +52,8 @@ export function ProfileView({
   savedArticles,
   savedLocations,
   categories,
+  communityStats,
+  communityPosts = [],
   isOwner,
 }: ProfileViewProps) {
   const xpBar = xpProgressInLevel(profile.xp);
@@ -87,6 +93,9 @@ export function ProfileView({
               <StatPill icon={<Trophy className="size-3.5" />} label={`${profile.completion_percentage}% complete`} />
               <StatPill icon={<Award className="size-3.5" />} label={`${profile.achievements_unlocked} achievements`} />
               <StatPill icon={<Gem className="size-3.5" />} label={`${profile.collectibles_found} collectibles`} />
+              {profile.community_reputation > 0 && (
+                <StatPill icon={<Sparkles className="size-3.5" />} label={`${profile.community_reputation} rep`} />
+              )}
             </div>
           </div>
           <div className="text-right">
@@ -214,6 +223,12 @@ export function ProfileView({
           )}
         </section>
       </div>
+
+      {communityStats && (
+        <div className="mt-10">
+          <CommunityProfileSection stats={communityStats} posts={communityPosts} />
+        </div>
+      )}
 
       <section className="mt-10">
         <h2 className="mb-4 font-heading text-xl font-semibold text-white">Category Breakdown</h2>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText, Rss, Sparkles, MapPin, Trophy, Calendar } from "lucide-react";
+import { Plus, FileText, Rss, Sparkles, MapPin, Trophy, Calendar, Users, Search, ListTodo } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { getAllArticlesAdmin } from "@/lib/articles/queries";
@@ -59,10 +59,22 @@ export default async function AdminDashboardPage() {
             description="Ingest content from external platforms"
           />
           <AdminLink
-            href="/admin/editorial"
+            href="/admin/workflow"
+            icon={<ListTodo className="size-5" />}
+            title="Editorial Workflow"
+            description="Task-driven pipeline — kanban, generator, daily capacity"
+          />
+          <AdminLink
+            href="/admin/dashboard"
             icon={<Calendar className="size-5" />}
-            title="Editorial Calendar"
-            description="Drafts queue, sources, videos, and content gaps"
+            title="Editorial Dashboard"
+            description="Morning briefing, opportunities, SEO gaps, and daily report"
+          />
+          <AdminLink
+            href="/admin/seo"
+            icon={<Search className="size-5" />}
+            title="SEO Command Center"
+            description="Content inventory, improve queue, coverage, and weekly report"
           />
           <AdminLink
             href="/admin/drafts"
@@ -81,6 +93,12 @@ export default async function AdminDashboardPage() {
             icon={<Trophy className="size-5" />}
             title="Completion Tracker"
             description={`Manage tracker items (${trackerTotals.totalItems} published)`}
+          />
+          <AdminLink
+            href="/admin/community"
+            icon={<Users className="size-5" />}
+            title="Community"
+            description="Moderate posts, polls, and weekly contests"
           />
         </div>
       </div>

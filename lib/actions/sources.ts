@@ -20,6 +20,7 @@ export interface ActionResult {
 function revalidateSourcePaths() {
   revalidatePath("/admin/sources");
   revalidatePath("/admin/drafts");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/admin");
 }
 

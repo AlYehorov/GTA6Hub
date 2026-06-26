@@ -61,7 +61,7 @@ const KIND_FAQS: Partial<Record<GameEntityKind, EntityFaqItem[]>> = {
   ],
 };
 
-function entitySpecificFaqs(entity: GameEntity, kind: GameEntityKind): EntityFaqItem[] {
+function entitySpecificFaqs(entity: GameEntity): EntityFaqItem[] {
   return [
     {
       question: `What is ${entity.title} in GTA 6?`,
@@ -80,7 +80,7 @@ function entitySpecificFaqs(entity: GameEntity, kind: GameEntityKind): EntityFaq
 
 export function generateEntityFaqs(entity: GameEntity, kind: GameEntityKind): EntityFaqItem[] {
   const kindFaqs = KIND_FAQS[kind] ?? [];
-  const specific = entitySpecificFaqs(entity, kind);
+  const specific = entitySpecificFaqs(entity);
 
   const combined = [...specific, ...kindFaqs, ...GLOBAL_FAQS];
   const seen = new Set<string>();

@@ -1,14 +1,9 @@
-/** Community Leonida map (YANIS v13) — tiles by the GTA Mapping Community via State of Leonida. */
-export const LEONIDA_MAP_ATTRIBUTION =
-  'Map tiles © <a href="https://map.stateofleonida.net/" target="_blank" rel="noopener noreferrer">State of Leonida</a> / GTA Mapping Community';
+/** Leonida community map tiles (YANIS v13) — GTA Mapping Community. */
+export const LEONIDA_MAP_ATTRIBUTION = "Map tiles © GTA Mapping Community";
 
-export const LEONIDA_TILE_URL =
-  "https://map.stateofleonida.net/tiles/YANIS/v13/normal/{z}/{x}/{y}.png";
+export const LEONIDA_TILE_URL = "/api/map/tiles/YANIS/v13/normal/{z}/{x}/{y}.png";
 
-export const LEONIDA_TILE_URL_DARK =
-  "https://map.stateofleonida.net/tiles/YANIS/v13/dark/{z}/{x}/{y}.png";
-
-export const LEONIDA_COMMUNITY_MAP_URL = "https://map.stateofleonida.net/?lang=en";
+export const LEONIDA_TILE_URL_DARK = "/api/map/tiles/YANIS/v13/dark/{z}/{x}/{y}.png";
 
 export const LEONIDA_MAP_BOUNDS = {
   south: -8000,

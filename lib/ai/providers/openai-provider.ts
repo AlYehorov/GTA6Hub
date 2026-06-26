@@ -1,49 +1,27 @@
 import type { SourceItem } from "@/lib/types/source";
 import type { AiGeneratedArticle } from "@/lib/types/ai-draft";
 import {
+  createChatCompletion,
+  isOpenAiConfigured,
+} from "@/lib/ai/openai-client";
+import {
   ARTICLE_DRAFT_SYSTEM_PROMPT,
   buildArticleDraftUserPrompt,
 } from "@/lib/ai/prompts/article-draft";
 
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-const DEFAULT_MODEL = "gpt-4o-mini";
+export { isOpenAiConfigured };
 
 export async function generateOpenAiDraft(source: SourceItem): Promise<AiGeneratedArticle> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
-  }
-
-  const response = await fetch(OPENAI_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL?.trim() || DEFAULT_MODEL,
-      temperature: 0.6,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: ARTICLE_DRAFT_SYSTEM_PROMPT },
-        { role: "user", content: buildArticleDraftUserPrompt(source) },
-      ],
-    }),
+  const content = await createChatCompletion({
+    messages: [
+      { role: "system", content: ARTICLE_DRAFT_SYSTEM_PROMPT },
+      { role: "user", content: buildArticleDraftUserPrompt(source) },
+    ],
+    temperature: 0.6,
+    response_format: { type: "json_object" },
+    errorPrefix: "OpenAI request failed",
+    feature: "article_draft",
   });
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`OpenAI request failed (${response.status}): ${body.slice(0, 200)}`);
-  }
-
-  const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-
-  const content = payload.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("OpenAI returned an empty response");
-  }
 
   const parsed = JSON.parse(content) as Partial<AiGeneratedArticle> & { tags?: string[] };
 
@@ -90,8 +68,4 @@ function clampConfidence(value: unknown, source: SourceItem): number {
   }
   const capped = source.source_label === "unconfirmed" ? Math.min(num, 0.65) : num;
   return Math.max(0, Math.min(1, capped));
-}
-
-export function isOpenAiConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
 }

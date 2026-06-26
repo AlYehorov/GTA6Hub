@@ -9,9 +9,10 @@ interface MapSchemeToggleProps {
   scheme: MapTileScheme;
   onChange: (scheme: MapTileScheme) => void;
   className?: string;
+  compact?: boolean;
 }
 
-export function MapSchemeToggle({ scheme, onChange, className }: MapSchemeToggleProps) {
+export function MapSchemeToggle({ scheme, onChange, className, compact }: MapSchemeToggleProps) {
   return (
     <div
       className={cn(
@@ -22,24 +23,28 @@ export function MapSchemeToggle({ scheme, onChange, className }: MapSchemeToggle
       <button
         type="button"
         onClick={() => onChange("normal")}
+        aria-label="Day map"
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors min-h-11 sm:min-h-0 sm:py-1.5",
+          "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors",
+          compact ? "size-11 sm:size-9" : "min-h-11 px-3 py-2 text-xs sm:min-h-0 sm:py-1.5",
           scheme === "normal" ? "bg-white/10 text-white" : "text-white/50 hover:text-white/80"
         )}
       >
-        <Sun className="size-3.5" />
-        Day
+        <Sun className="size-4 sm:size-3.5" />
+        {!compact && <span>Day</span>}
       </button>
       <button
         type="button"
         onClick={() => onChange("dark")}
+        aria-label="Night map"
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors min-h-11 sm:min-h-0 sm:py-1.5",
+          "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors",
+          compact ? "size-11 sm:size-9" : "min-h-11 px-3 py-2 text-xs sm:min-h-0 sm:py-1.5",
           scheme === "dark" ? "bg-white/10 text-white" : "text-white/50 hover:text-white/80"
         )}
       >
-        <Moon className="size-3.5" />
-        Night
+        <Moon className="size-4 sm:size-3.5" />
+        {!compact && <span>Night</span>}
       </button>
     </div>
   );

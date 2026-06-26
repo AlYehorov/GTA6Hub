@@ -42,7 +42,6 @@ export default function RootLayout({
       <head>
         {supabaseOrigin ? <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" /> : null}
         <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://map.stateofleonida.net" crossOrigin="anonymous" />
       </head>
       <body className="flex min-h-full min-h-screen-safe flex-col">
         <SiteLayout>{children}</SiteLayout>

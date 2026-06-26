@@ -11,6 +11,7 @@ import {
   getSavedLocations,
   getUserAchievements,
 } from "@/lib/profile/queries";
+import { getCommunityProfileStats, getUserCommunityPosts } from "@/lib/community/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -36,13 +37,15 @@ export default async function PrivateProfilePage() {
   const profileWithStats = await getProfileWithStats(profile.username);
   if (!profileWithStats) redirect("/login");
 
-  const [achievements, activity, savedArticles, savedLocations, categories] =
+  const [achievements, activity, savedArticles, savedLocations, categories, communityStats, communityPosts] =
     await Promise.all([
       getUserAchievements(profile.id),
       getActivityEvents(profile.id, 10),
       getSavedArticles(profile.id, 20),
       getSavedLocations(profile.id, 20),
       getCategoryBreakdown(profile.id),
+      getCommunityProfileStats(profile.id),
+      getUserCommunityPosts(profile.id, 6),
     ]);
 
   return (
@@ -58,6 +61,8 @@ export default async function PrivateProfilePage() {
         savedArticles={savedArticles}
         savedLocations={savedLocations}
         categories={categories}
+        communityStats={communityStats}
+        communityPosts={communityPosts}
         isOwner
       />
     </>

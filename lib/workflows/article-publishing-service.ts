@@ -4,7 +4,7 @@ import { calculateReadingTime, slugify } from "@/lib/utils/article";
 import { getVideoBySourceItemId } from "@/lib/videos/queries";
 import { sanitizeArticleContent, sanitizeArticleExcerpt } from "@/lib/editorial/sanitize";
 import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
-import { normalizeYouTubeThumbnail, resolveHeroImageForArticle, isHighResolutionHero } from "@/lib/articles/resolve-hero-image";
+import { resolveHeroImageForArticle, isHighResolutionHero } from "@/lib/articles/resolve-hero-image";
 import type { AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { ArticleType } from "@/lib/types/article";
 import type { SourceLabel } from "@/lib/types/source";

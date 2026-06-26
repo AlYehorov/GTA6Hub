@@ -2,7 +2,16 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ArticleForm } from "@/components/admin/article-form";
 import { getCategoriesAdmin, getTagsAdmin } from "@/lib/articles/queries";
 
-export default async function CreateArticlePage() {
+export default async function CreateArticlePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ title?: string; type?: string }>;
+}) {
+  const params = await searchParams;
+  const defaultTitle = params.title?.trim() ?? "";
+  const defaultType =
+    params.type === "guide" || params.type === "news" ? params.type : undefined;
+
   const [categories, tags] = await Promise.all([
     getCategoriesAdmin(),
     getTagsAdmin(),
@@ -15,7 +24,12 @@ export default async function CreateArticlePage() {
         description="Write a new news post or guide. Save as draft or publish immediately."
       />
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <ArticleForm categories={categories} tags={tags} />
+        <ArticleForm
+          categories={categories}
+          tags={tags}
+          defaultTitle={defaultTitle}
+          defaultType={defaultType}
+        />
       </div>
     </>
   );

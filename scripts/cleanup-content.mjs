@@ -67,10 +67,6 @@ function isGta6SourceItem(item) {
 
 const MIN_CONTENT_CONFIDENCE = 0.9;
 
-function meetsConfidenceThreshold(confidence) {
-  return Number(confidence) >= MIN_CONTENT_CONFIDENCE;
-}
-
 function loadEnv() {
   const envPath = join(root, ".env.local");
   const content = readFileSync(envPath, "utf8");

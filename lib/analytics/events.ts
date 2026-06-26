@@ -10,7 +10,12 @@ export type AnalyticsEventName =
   | "overall_completion_updated"
   | "entity_view"
   | "search_query"
-  | "related_link_click";
+  | "related_link_click"
+  | "openai_request"
+  | "openai_draft"
+  | "openai_daily_report"
+  | "openai_seo_editor"
+  | "openai_weekly_seo_report";
 
 export interface ArticleViewPayload {
   article_id: string;
@@ -71,6 +76,11 @@ export interface RelatedLinkClickPayload {
   link_type: string;
 }
 
+export interface OpenAiRequestPayload {
+  feature: string;
+  model?: string;
+}
+
 export type AnalyticsEventPayload =
   | ArticleViewPayload
   | SearchPayload
@@ -82,7 +92,8 @@ export type AnalyticsEventPayload =
   | OverallCompletionPayload
   | EntityViewPayload
   | SearchQueryPayload
-  | RelatedLinkClickPayload;
+  | RelatedLinkClickPayload
+  | OpenAiRequestPayload;
 
 export interface AnalyticsEvent<T extends AnalyticsEventName = AnalyticsEventName> {
   event_name: T;

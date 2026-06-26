@@ -33,6 +33,22 @@ export async function getAllSourceItemsAdmin(
   return (data ?? []) as SourceItem[];
 }
 
+export async function getSourceItemByIdAdmin(
+  id: string
+): Promise<SourceItem | null> {
+  if (!isSupabaseAdminConfigured()) return null;
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("source_items")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data as SourceItem;
+}
+
 export async function getSourceItemStats(): Promise<{
   total: number;
   processed: number;

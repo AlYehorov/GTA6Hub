@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Upload } from "lucide-react";
@@ -25,10 +25,12 @@ interface ArticleFormProps {
   tags: Tag[];
   article?: ArticleWithRelations;
   defaultType?: ArticleType;
+  defaultTitle?: string;
+  focus?: "seo" | "faq" | "links" | "content";
 }
 
-const emptyForm = (type: ArticleType = "news"): ArticleFormData => ({
-  title: "",
+const emptyForm = (type: ArticleType = "news", title = ""): ArticleFormData => ({
+  title,
   slug: "",
   excerpt: "",
   content: "",
@@ -62,14 +64,29 @@ export function ArticleForm({
   tags,
   article,
   defaultType = "news",
+  defaultTitle = "",
+  focus,
 }: ArticleFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<ArticleFormData>(
-    article ? articleToForm(article) : emptyForm(defaultType)
+    article ? articleToForm(article) : emptyForm(defaultType, defaultTitle)
   );
+
+  useEffect(() => {
+    if (!focus) return;
+    const id =
+      focus === "seo"
+        ? "article-seo"
+        : focus === "content"
+          ? "article-content"
+          : focus === "links"
+            ? "article-content"
+            : "article-content";
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focus]);
 
   function updateField<K extends keyof ArticleFormData>(
     key: K,
@@ -239,6 +256,7 @@ export function ArticleForm({
             </label>
           </label>
 
+          <div id="article-seo" className="space-y-4 rounded-xl scroll-mt-24">
           <label className="block space-y-1.5">
             <span className="text-xs uppercase tracking-wider text-white/50">SEO title</span>
             <input
@@ -257,6 +275,7 @@ export function ArticleForm({
               className={inputClass}
             />
           </label>
+          </div>
 
           {tags.length > 0 && (
             <div className="space-y-2">
@@ -282,7 +301,7 @@ export function ArticleForm({
         </div>
       </div>
 
-      <label className="block space-y-1.5">
+      <label id="article-content" className="block scroll-mt-24 space-y-1.5">
         <span className="text-xs uppercase tracking-wider text-white/50">
           Content (Markdown)
         </span>
