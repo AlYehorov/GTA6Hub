@@ -7,9 +7,9 @@ import type { CarouselItem, CardVariant } from "@/lib/types";
 
 const NEWS_IMAGES = [
   GTA6_IMAGES.trailer2Header,
-  GTA6_IMAGES.viceCityBanner,
-  GTA6_IMAGES.luciaCaminos02,
-  GTA6_IMAGES.jasonLuciaMotel,
+  GTA6_IMAGES.heroViceCity,
+  GTA6_IMAGES.jasonLucia03Landscape,
+  GTA6_IMAGES.luciaPortrait,
   GTA6_IMAGES.jasonDuval04,
 ];
 
@@ -40,7 +40,7 @@ export function articlesToCarouselItems(articles: ArticleListItem[]): CarouselIt
     subtitle: polishPublicExcerpt(article.excerpt, article.title) ?? "",
     href: article.type === "guide" ? `/guides/${article.slug}` : `/news/${article.slug}`,
     tag: article.editorial_label ?? article.category?.name ?? "News",
-    image: resolveHeroImageForArticle(article.hero_image_url, article.slug),
+    image: resolveHeroImageForArticle(article.hero_image_url, article.slug, index),
     variant: index === 0 ? "hero" : NEWS_VARIANTS[index - 1] ?? "landscape",
   }));
 }

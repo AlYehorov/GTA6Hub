@@ -11,12 +11,14 @@ interface NewsroomArticleCardProps {
   article: ArticleListItem;
   type?: ArticleType;
   compact?: boolean;
+  imageIndex?: number;
 }
 
 export function NewsroomArticleCard({
   article,
   type = "news",
   compact,
+  imageIndex,
 }: NewsroomArticleCardProps) {
   const href = type === "news" ? `/news/${article.slug}` : `/guides/${article.slug}`;
   const labelStyle = EDITORIAL_LABEL_STYLES[article.editorial_label];
@@ -31,7 +33,12 @@ export function NewsroomArticleCard({
     >
       <Link href={href} className="block">
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
-          <SafeArticleImage src={article.hero_image_url} seed={article.slug} alt={article.title} />
+          <SafeArticleImage
+            src={article.hero_image_url}
+            seed={article.slug}
+            imageIndex={imageIndex}
+            alt={article.title}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         </div>
 

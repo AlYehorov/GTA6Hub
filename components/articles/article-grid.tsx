@@ -20,12 +20,12 @@ export function ArticleGrid({ articles, type }: ArticleGridProps) {
   return (
     <div className="space-y-6">
       {featured && (
-        <ArticleCard article={featured} type={type} featured />
+        <ArticleCard article={featured} type={type} featured imageIndex={0} />
       )}
       {rest.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {rest.map((article) => (
-            <ArticleCard key={article.id} article={article} type={type} />
+          {rest.map((article, index) => (
+            <ArticleCard key={article.id} article={article} type={type} imageIndex={index + 1} />
           ))}
         </div>
       )}

@@ -89,8 +89,13 @@ function NewsroomSection({
         <p className="text-sm text-white/40">{empty}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {articles.map((article) => (
-            <NewsroomArticleCard key={article.id} article={article} type={type} />
+          {articles.map((article, index) => (
+            <NewsroomArticleCard
+              key={article.id}
+              article={article}
+              type={type}
+              imageIndex={index}
+            />
           ))}
         </div>
       )}

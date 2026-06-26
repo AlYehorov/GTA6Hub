@@ -4,7 +4,7 @@ import { calculateReadingTime, slugify } from "@/lib/utils/article";
 import { getVideoBySourceItemId } from "@/lib/videos/queries";
 import { sanitizeArticleContent, sanitizeArticleExcerpt } from "@/lib/editorial/sanitize";
 import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
-import { normalizeYouTubeThumbnail, resolveHeroImageForArticle } from "@/lib/articles/resolve-hero-image";
+import { normalizeYouTubeThumbnail, resolveHeroImageForArticle, isHighResolutionHero } from "@/lib/articles/resolve-hero-image";
 import type { AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { ArticleType } from "@/lib/types/article";
 import type { SourceLabel } from "@/lib/types/source";
@@ -63,8 +63,8 @@ export class ArticlePublishingService {
         slug,
         excerpt: sanitizeArticleExcerpt(draft.excerpt),
         content: sanitizeArticleContent(draft.content),
-        hero_image_url: heroImageUrl
-          ? normalizeYouTubeThumbnail(heroImageUrl)
+        hero_image_url: isHighResolutionHero(heroImageUrl)
+          ? heroImageUrl!.trim()
           : resolveHeroImageForArticle(null, slug),
         status: "published",
         type,

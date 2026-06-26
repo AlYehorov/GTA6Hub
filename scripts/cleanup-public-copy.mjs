@@ -32,19 +32,33 @@ const DRAFT_PATTERNS = [
 const BASED_ON_PREFIX =
   /^based on\s+(rockstar\s+(newswire|youtube)|reddit|x(?:\s*\(twitter\))?|community)\s*:\s*/i;
 
-const FALLBACK_IMAGES = [
+const EDITORIAL_2K_IMAGES = [
   "/images/gta6/trailer-2-header.jpg",
-  "/images/gta6/vice-city-banner.jpg",
-  "/images/gta6/lucia-caminos-02.jpg",
-  "/images/gta6/jason-lucia-motel.jpg",
-  "/images/gta6/jason-duval-04.jpg",
   "/images/gta6/hero-vice-city.jpg",
+  "/images/gta6/jason-lucia-03-landscape.jpg",
+  "/images/gta6/lucia-portrait.jpg",
+  "/images/gta6/jason-duval-04.jpg",
+  "/images/gta6/vice-city-banner.jpg",
+  "/images/gta6/jason-lucia-motel.jpg",
+  "/images/gta6/lucia-caminos-02.jpg",
+  "/images/gta6/jason-duval-01.jpg",
+  "/images/gta6/raul-bautista.jpg",
+  "/images/gta6/vice-city-blank.jpg",
+  "/images/gta6/jason-lucia-03-portrait.jpg",
 ];
 
-function hashString(value) {
-  let hash = 0;
-  for (let i = 0; i < value.length; i++) hash = (hash * 31 + value.charCodeAt(i)) | 0;
-  return Math.abs(hash);
+function isHighResolutionHero(url) {
+  if (!url?.trim()) return false;
+  const normalized = url.trim().toLowerCase();
+  if (normalized.includes("img.youtube.com/vi/")) return false;
+  if (normalized.includes("hqdefault") || normalized.includes("mqdefault")) return false;
+  if (normalized.startsWith("/images/gta6/")) return true;
+  if (normalized.includes("supabase.co/storage/")) return true;
+  return /\.(webp|jpg|jpeg|png)(\?|$)/i.test(normalized);
+}
+
+function editorialFallbackByIndex(index) {
+  return EDITORIAL_2K_IMAGES[index % EDITORIAL_2K_IMAGES.length];
 }
 
 function sanitizeContent(content) {
@@ -61,14 +75,11 @@ function sanitizeExcerpt(excerpt) {
   return text || null;
 }
 
-function normalizeHero(url, slug) {
-  if (url?.trim()) {
-    return url
-      .trim()
-      .replace(/\/maxresdefault\.jpg$/i, "/hqdefault.jpg")
-      .replace(/\/sddefault\.jpg$/i, "/hqdefault.jpg");
+function normalizeHero(url, index) {
+  if (isHighResolutionHero(url) && url.includes("supabase.co/storage/")) {
+    return url.trim();
   }
-  return FALLBACK_IMAGES[hashString(slug) % FALLBACK_IMAGES.length];
+  return editorialFallbackByIndex(index);
 }
 
 loadEnv();
@@ -86,7 +97,8 @@ const supabase = createClient(url, serviceKey);
 const { data: articles, error } = await supabase
   .from("articles")
   .select("id, slug, title, excerpt, content, hero_image_url, status")
-  .eq("status", "published");
+  .eq("status", "published")
+  .order("published_at", { ascending: false });
 
 if (error) {
   console.error(error.message);
@@ -95,10 +107,10 @@ if (error) {
 
 let updated = 0;
 
-for (const article of articles ?? []) {
+for (const [index, article] of (articles ?? []).entries()) {
   const nextContent = sanitizeContent(article.content);
   const nextExcerpt = sanitizeExcerpt(article.excerpt);
-  const nextHero = normalizeHero(article.hero_image_url, article.slug);
+  const nextHero = normalizeHero(article.hero_image_url, index);
 
   const changed =
     nextContent !== (article.content ?? "") ||

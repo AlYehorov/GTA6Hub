@@ -16,7 +16,7 @@ export const LEONIDA_MAP_CONFIG = {
   originalSize: { width: 20000, height: 20000 },
   bounds: LEONIDA_MAP_BOUNDS,
   minZoom: 0,
-  maxZoom: 6,
+  maxZoom: 8,
   maxNativeZoom: 6,
   tileSize: 256,
 } as const;
@@ -32,8 +32,12 @@ export function percentToLeonidaCoords(lat: number, lng: number): [number, numbe
 export function createLeonidaCrs(L: typeof import("leaflet")) {
   const { south, west, north, east } = LEONIDA_MAP_BOUNDS;
   const { width, height } = LEONIDA_MAP_CONFIG.originalSize;
-  const pxPerUnitX = width / (east - west);
-  const pxPerUnitY = height / (north - south);
+  const { maxNativeZoom } = LEONIDA_MAP_CONFIG;
+  const boundsWidth = east - west;
+  const boundsHeight = north - south;
+  const zoomFactor = Math.pow(2, maxNativeZoom);
+  const pxPerUnitX = width / boundsWidth / zoomFactor;
+  const pxPerUnitY = height / boundsHeight / zoomFactor;
 
   return L.extend({}, L.CRS.Simple, {
     transformation: new L.Transformation(pxPerUnitX, -west * pxPerUnitX, -pxPerUnitY, north * pxPerUnitY),

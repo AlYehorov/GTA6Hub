@@ -96,8 +96,14 @@ function HomeArticleRow({
     <section className="section-reveal mx-auto max-w-7xl">
       <SectionHeader title={title} href={href} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {articles.slice(0, 4).map((article) => (
-          <NewsroomArticleCard key={article.id} article={article} type={type} compact />
+        {articles.slice(0, 4).map((article, index) => (
+          <NewsroomArticleCard
+            key={article.id}
+            article={article}
+            type={type}
+            compact
+            imageIndex={index}
+          />
         ))}
       </div>
     </section>

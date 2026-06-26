@@ -10,9 +10,10 @@ interface ArticleCardProps {
   article: ArticleListItem;
   type: ArticleType;
   featured?: boolean;
+  imageIndex?: number;
 }
 
-export function ArticleCard({ article, type, featured }: ArticleCardProps) {
+export function ArticleCard({ article, type, featured, imageIndex }: ArticleCardProps) {
   const href = type === "news" ? `/news/${article.slug}` : `/guides/${article.slug}`;
 
   return (
@@ -32,6 +33,7 @@ export function ArticleCard({ article, type, featured }: ArticleCardProps) {
         <SafeArticleImage
           src={article.hero_image_url}
           seed={article.slug}
+          imageIndex={imageIndex}
           alt={article.title}
           featured={featured}
         />

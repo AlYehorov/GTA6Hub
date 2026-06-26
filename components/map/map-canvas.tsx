@@ -25,21 +25,27 @@ export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: Ma
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markersRef = useRef<LeafletMarker[]>([]);
+  const onSelectRef = useRef(onSelectPoint);
+
+  useEffect(() => {
+    onSelectRef.current = onSelectPoint;
+  }, [onSelectPoint]);
 
   useEffect(() => {
     let cancelled = false;
+    let map: LeafletMap | null = null;
 
     async function initMap() {
-      if (!containerRef.current || mapRef.current) return;
+      const container = containerRef.current;
+      if (!container || mapRef.current) return;
 
       const L = (await import("leaflet")).default;
-
       if (cancelled || !containerRef.current) return;
 
       const crs = createLeonidaCrs(L);
       const bounds = leonidaLatLngBounds(L);
 
-      const map = L.map(containerRef.current, {
+      map = L.map(container, {
         crs,
         minZoom: LEONIDA_MAP_CONFIG.minZoom,
         maxZoom: LEONIDA_MAP_CONFIG.maxZoom,
@@ -61,21 +67,37 @@ export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: Ma
 
       map.fitBounds(bounds);
       mapRef.current = map;
+
+      requestAnimationFrame(() => {
+        map?.invalidateSize();
+        map?.fitBounds(bounds);
+      });
     }
 
     void initMap();
 
+    const onResize = () => {
+      mapRef.current?.invalidateSize();
+    };
+    window.addEventListener("resize", onResize);
+
     return () => {
       cancelled = true;
-      mapRef.current?.remove();
+      window.removeEventListener("resize", onResize);
+      if (map) {
+        map.remove();
+        map = null;
+      }
       mapRef.current = null;
       markersRef.current = [];
+      if (containerRef.current) {
+        containerRef.current.replaceChildren();
+      }
     };
   }, []);
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
+    if (!mapRef.current) return;
 
     let cancelled = false;
 
@@ -104,7 +126,7 @@ export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: Ma
         });
 
         const marker = L.marker([lat, lng], { icon }).addTo(activeMap);
-        marker.on("click", () => onSelectPoint(point));
+        marker.on("click", () => onSelectRef.current(point));
         markersRef.current.push(marker);
       }
     }
@@ -114,11 +136,11 @@ export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: Ma
     return () => {
       cancelled = true;
     };
-  }, [points, spoilerMode, selectedId, onSelectPoint]);
+  }, [points, spoilerMode, selectedId]);
 
   return (
-    <div className="relative aspect-[3/2] w-full overflow-hidden rounded-xl border border-white/10 bg-[#061018] shadow-2xl sm:rounded-2xl">
-      <div ref={containerRef} className="absolute inset-0 z-0" />
+    <div className="relative aspect-[3/2] min-h-[320px] w-full overflow-hidden rounded-xl border border-white/10 bg-[#061018] shadow-2xl sm:min-h-[420px] sm:rounded-2xl">
+      <div ref={containerRef} className="absolute inset-0 z-0 h-full w-full" />
       {points.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
           <p className="rounded-lg bg-black/60 px-4 py-2 text-sm text-white/50">
