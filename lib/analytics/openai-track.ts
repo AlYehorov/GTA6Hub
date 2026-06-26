@@ -6,6 +6,8 @@ import { getOpenAiModel } from "@/lib/ai/openai-client";
 
 const FEATURE_EVENT_MAP: Record<string, AnalyticsEventName> = {
   article_draft: "openai_draft",
+  content_plan: "openai_request",
+  content_draft: "openai_draft",
   daily_report: "openai_daily_report",
   seo_ai_editor: "openai_seo_editor",
   weekly_seo_report: "openai_weekly_seo_report",

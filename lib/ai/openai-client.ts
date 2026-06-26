@@ -41,9 +41,25 @@ function getApiKey(): string {
   return apiKey;
 }
 
+export interface ChatCompletionResult {
+  content: string;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
 export async function createChatCompletion(
   options: ChatCompletionOptions
 ): Promise<string> {
+  const result = await createChatCompletionDetailed(options);
+  return result.content;
+}
+
+export async function createChatCompletionDetailed(
+  options: ChatCompletionOptions
+): Promise<ChatCompletionResult> {
   const apiKey = getApiKey();
   const prefix = options.errorPrefix ?? "OpenAI request failed";
 
@@ -69,6 +85,11 @@ export async function createChatCompletion(
 
   const payload = (await response.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
+    usage?: {
+      prompt_tokens?: number;
+      completion_tokens?: number;
+      total_tokens?: number;
+    };
   };
 
   const content = payload.choices?.[0]?.message?.content;
@@ -76,10 +97,19 @@ export async function createChatCompletion(
     throw new Error("OpenAI returned an empty response");
   }
 
+  const usage = {
+    prompt_tokens: payload.usage?.prompt_tokens ?? 0,
+    completion_tokens: payload.usage?.completion_tokens ?? 0,
+    total_tokens: payload.usage?.total_tokens ?? 0,
+  };
+
   if (options.feature) {
     const { trackOpenAiRequest } = await import("@/lib/analytics/openai-track");
     await trackOpenAiRequest(options.feature);
   }
 
-  return content.trim();
+  return {
+    content: content.trim(),
+    usage,
+  };
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText, Rss, Sparkles, MapPin, Trophy, Calendar, Users, Search, ListTodo, Network } from "lucide-react";
+import { Plus, FileText, Rss, Sparkles, MapPin, Trophy, Calendar, Users, Search, ListTodo, Network, Wand2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { getAllArticlesAdmin } from "@/lib/articles/queries";
@@ -81,6 +81,12 @@ export default async function AdminDashboardPage() {
             icon={<Search className="size-5" />}
             title="SEO Command Center"
             description="Content inventory, improve queue, coverage, and weekly report"
+          />
+          <AdminLink
+            href="/admin/content-engine"
+            icon={<Wand2 className="size-5" />}
+            title="Content Engine"
+            description="Two-step AI — content plans, pack drafts, workflow handoff"
           />
           <AdminLink
             href="/admin/drafts"
