@@ -13,6 +13,7 @@ import { InternalLinksSection } from "@/components/admin/editorial-dashboard/int
 import { SeoHealthSection } from "@/components/admin/editorial-dashboard/seo-health-section";
 import { OneClickActionsSection } from "@/components/admin/editorial-dashboard/one-click-actions-section";
 import { DailyReportSection } from "@/components/admin/editorial-dashboard/daily-report-section";
+import { WorkflowAttentionSection } from "@/components/admin/editorial-dashboard/workflow-attention-section";
 
 export default async function EditorialDashboardPage() {
   const data = await loadEditorialDashboardData();
@@ -38,6 +39,8 @@ export default async function EditorialDashboardPage() {
         />
 
         <TodaySummarySection summary={data.summary} />
+
+        <WorkflowAttentionSection />
 
         <ContentOpportunitiesSection opportunities={data.opportunities} />
 

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type {
-  DailyCapacity,
+  DailyWorkspaceCapacity,
   OpenAiUsageStats,
-  WeeklyWorkflowStats,
-  WorkflowMetrics,
-} from "@/lib/workflow/types";
+  WeeklyWorkspaceStats,
+  WorkspaceMetrics,
+} from "@/lib/workspace/types";
+import type { ArticleWorkspaceWithContext } from "@/lib/workspace/types";
 
 export function WorkflowStatsBar({
   dailyCapacity,
@@ -12,33 +13,33 @@ export function WorkflowStatsBar({
   metrics,
   openAiUsage,
 }: {
-  dailyCapacity: DailyCapacity;
-  weeklyStats: WeeklyWorkflowStats;
-  metrics: WorkflowMetrics;
+  dailyCapacity: DailyWorkspaceCapacity;
+  weeklyStats: WeeklyWorkspaceStats;
+  metrics: WorkspaceMetrics;
   openAiUsage: OpenAiUsageStats;
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-4">
       <StatCard
         title="Today's workload"
-        value={`${dailyCapacity.taskCount} tasks`}
+        value={`${dailyCapacity.articleCount} articles`}
         sub={`Estimated ${dailyCapacity.estimatedMinutes} minutes`}
       />
       <StatCard
         title="Weekly progress"
-        value={`${weeklyStats.tasksCompleted}/${weeklyStats.tasksCreated}`}
+        value={`${weeklyStats.workspacesCompleted}/${weeklyStats.workspacesCreated}`}
         sub={`${weeklyStats.completionRate}% completion${
-          weeklyStats.averageCompletionMinutes
-            ? ` · avg ${weeklyStats.averageCompletionMinutes}m`
+          weeklyStats.averageSeoGain
+            ? ` · avg +${weeklyStats.averageSeoGain} SEO`
             : ""
         }`}
       />
       <StatCard
         title="Success metrics"
-        value={`${metrics.tasksCompletedToday} done today`}
-        sub={`${metrics.openOpportunities} open opportunities${
-          metrics.averagePublishMinutes
-            ? ` · avg publish ${metrics.averagePublishMinutes}m`
+        value={`${metrics.completedImprovementsToday} done today`}
+        sub={`${metrics.openWorkspaces} open workspaces${
+          metrics.averageImprovementMinutes
+            ? ` · avg ${metrics.averageImprovementMinutes}m`
             : ""
         }`}
       />
@@ -69,17 +70,27 @@ function StatCard({
   );
 }
 
-export function OneClickActionsSection() {
+export function OneClickActionsSection({
+  articleId,
+}: {
+  articleId?: string;
+}) {
+  const articleHref = articleId
+    ? `/admin/articles/${articleId}?focus=content`
+    : "/admin/articles";
+
   return (
     <section className="rounded-2xl border border-gta-pink/20 bg-gta-pink/5 p-6">
       <h2 className="font-heading text-xl font-semibold text-white">
         One-Click Actions
       </h2>
-      <p className="mt-1 text-sm text-white/45">Never auto-publish</p>
+      <p className="mt-1 text-sm text-white/45">
+        OpenAI only when you click — never auto-publish
+      </p>
       <div className="mt-4 flex flex-wrap gap-3">
         <ActionLink href="/admin/sources" label="Generate Draft" />
-        <ActionLink href="/admin/seo" label="Improve SEO" />
-        <ActionLink href="/admin/articles" label="Generate FAQ" />
+        <ActionLink href="/admin/seo" label="Improve with AI" />
+        <ActionLink href={articleHref} label="Generate FAQ" />
         <ActionLink href="/admin/seo#inventory" label="Internal Links" />
       </div>
     </section>
@@ -97,30 +108,32 @@ function ActionLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-export function TaskHistorySection({
+export function WorkspaceHistorySection({
   history,
 }: {
-  history: Array<{ id: string; title: string; status: string; completed_at: string | null }>;
+  history: ArticleWorkspaceWithContext[];
 }) {
   return (
     <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-      <h2 className="font-heading text-xl font-semibold text-white">Task History</h2>
-      <p className="mt-1 text-sm text-white/45">Completed, archived, cancelled</p>
+      <h2 className="font-heading text-xl font-semibold text-white">
+        Completed Improvements
+      </h2>
+      <p className="mt-1 text-sm text-white/45">Finished and archived workspaces</p>
 
       {history.length === 0 ? (
-        <p className="mt-6 text-sm text-white/40">No completed tasks yet.</p>
+        <p className="mt-6 text-sm text-white/40">No completed improvements yet.</p>
       ) : (
         <ul className="mt-6 space-y-2">
-          {history.slice(0, 20).map((task) => (
+          {history.slice(0, 20).map((workspace) => (
             <li
-              key={task.id}
+              key={workspace.id}
               className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/[0.06] px-4 py-3 text-sm"
             >
-              <span className="text-white">{task.title}</span>
+              <span className="text-white">{workspace.articleTitle}</span>
               <span className="text-xs text-white/40">
-                {task.status}
-                {task.completed_at
-                  ? ` · ${new Date(task.completed_at).toLocaleDateString()}`
+                SEO {workspace.seo_score} → {workspace.potential_score}
+                {workspace.completed_at
+                  ? ` · ${new Date(workspace.completed_at).toLocaleDateString()}`
                   : ""}
               </span>
             </li>

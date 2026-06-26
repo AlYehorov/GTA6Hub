@@ -1,18 +1,26 @@
 -- Sprint 7: Community Engine
 
-create type community_post_type as enum (
-  'screenshot',
-  'theory',
-  'discussion',
-  'discovery',
-  'collection'
-);
+do $$ begin
+  create type community_post_type as enum (
+    'screenshot',
+    'theory',
+    'discussion',
+    'discovery',
+    'collection'
+  );
+exception
+  when duplicate_object then null;
+end $$;
 
-create type community_post_status as enum (
-  'pending',
-  'approved',
-  'rejected'
-);
+do $$ begin
+  create type community_post_status as enum (
+    'pending',
+    'approved',
+    'rejected'
+  );
+exception
+  when duplicate_object then null;
+end $$;
 
 create table if not exists community_contests (
   id uuid primary key default gen_random_uuid(),
@@ -49,6 +57,8 @@ create table if not exists community_posts (
   updated_at timestamptz not null default now()
 );
 
+alter table community_contests
+  drop constraint if exists community_contests_winning_post_fkey;
 alter table community_contests
   add constraint community_contests_winning_post_fkey
   foreign key (winning_post_id) references community_posts(id) on delete set null;
@@ -234,45 +244,64 @@ alter table community_contests enable row level security;
 alter table community_contest_votes enable row level security;
 alter table community_notifications enable row level security;
 
+drop policy if exists "community_posts_public_read" on community_posts;
 create policy "community_posts_public_read" on community_posts
   for select using (status = 'approved' or auth.uid() = user_id);
 
+drop policy if exists "community_posts_own_insert" on community_posts;
 create policy "community_posts_own_insert" on community_posts
   for insert with check (auth.uid() = user_id);
 
+drop policy if exists "community_posts_own_update_pending" on community_posts;
 create policy "community_posts_own_update_pending" on community_posts
   for update using (auth.uid() = user_id and status = 'pending');
 
+drop policy if exists "community_likes_public_read" on community_likes;
 create policy "community_likes_public_read" on community_likes for select using (true);
+drop policy if exists "community_likes_own_insert" on community_likes;
 create policy "community_likes_own_insert" on community_likes for insert with check (auth.uid() = user_id);
+drop policy if exists "community_likes_own_delete" on community_likes;
 create policy "community_likes_own_delete" on community_likes for delete using (auth.uid() = user_id);
 
+drop policy if exists "community_comments_public_read" on community_comments;
 create policy "community_comments_public_read" on community_comments for select using (true);
+drop policy if exists "community_comments_own_insert" on community_comments;
 create policy "community_comments_own_insert" on community_comments for insert with check (auth.uid() = user_id);
 
+drop policy if exists "community_polls_public_read" on community_polls;
 create policy "community_polls_public_read" on community_polls
   for select using (status in ('active', 'closed'));
 
+drop policy if exists "community_poll_options_public_read" on community_poll_options;
 create policy "community_poll_options_public_read" on community_poll_options for select using (true);
 
+drop policy if exists "community_poll_votes_own_select" on community_poll_votes;
 create policy "community_poll_votes_own_select" on community_poll_votes
   for select using (auth.uid() = user_id);
+drop policy if exists "community_poll_votes_own_insert" on community_poll_votes;
 create policy "community_poll_votes_own_insert" on community_poll_votes
   for insert with check (auth.uid() = user_id);
 
+drop policy if exists "community_contests_public_read" on community_contests;
 create policy "community_contests_public_read" on community_contests for select using (true);
 
+drop policy if exists "community_contest_votes_public_read" on community_contest_votes;
 create policy "community_contest_votes_public_read" on community_contest_votes for select using (true);
+drop policy if exists "community_contest_votes_own_insert" on community_contest_votes;
 create policy "community_contest_votes_own_insert" on community_contest_votes
   for insert with check (auth.uid() = user_id);
+drop policy if exists "community_contest_votes_own_update" on community_contest_votes;
 create policy "community_contest_votes_own_update" on community_contest_votes
   for update using (auth.uid() = user_id);
 
+drop policy if exists "community_notifications_own_select" on community_notifications;
 create policy "community_notifications_own_select" on community_notifications
   for select using (auth.uid() = user_id);
+drop policy if exists "community_notifications_own_update" on community_notifications;
 create policy "community_notifications_own_update" on community_notifications
   for update using (auth.uid() = user_id);
 
+drop policy if exists "community_poll_votes_own_delete" on community_poll_votes;
 create policy "community_poll_votes_own_delete" on community_poll_votes
   for delete using (auth.uid() = user_id);
 
@@ -281,9 +310,11 @@ insert into storage.buckets (id, name, public)
 values ('community-images', 'community-images', true)
 on conflict (id) do nothing;
 
+drop policy if exists "community_images_public_read" on storage.objects;
 create policy "community_images_public_read" on storage.objects
   for select using (bucket_id = 'community-images');
 
+drop policy if exists "community_images_auth_upload" on storage.objects;
 create policy "community_images_auth_upload" on storage.objects
   for insert with check (
     bucket_id = 'community-images'
@@ -291,6 +322,7 @@ create policy "community_images_auth_upload" on storage.objects
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+drop policy if exists "community_images_own_delete" on storage.objects;
 create policy "community_images_own_delete" on storage.objects
   for delete using (
     bucket_id = 'community-images'

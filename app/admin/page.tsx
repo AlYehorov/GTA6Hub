@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
             href="/admin/workflow"
             icon={<ListTodo className="size-5" />}
             title="Editorial Workflow"
-            description="Task-driven pipeline — kanban, generator, daily capacity"
+            description="Article workspaces — one improvement per article, checklist inside"
           />
           <AdminLink
             href="/admin/dashboard"

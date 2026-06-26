@@ -1,13 +1,10 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { loadWorkflowPageData } from "@/lib/workflow/loader";
-import { TodaysTasksSection } from "@/components/admin/workflow/todays-tasks-section";
-import { TaskGeneratorSection } from "@/components/admin/workflow/task-generator-section";
-import { WorkflowKanban } from "@/components/admin/workflow/workflow-kanban";
-import { TaskDetailSection } from "@/components/admin/workflow/task-detail-section";
+import { ArticlesAttentionSection } from "@/components/admin/workflow/articles-attention-section";
+import { ScanWorkspacesSection } from "@/components/admin/workflow/scan-workspaces-section";
 import {
   WorkflowStatsBar,
-  OneClickActionsSection,
-  TaskHistorySection,
+  WorkspaceHistorySection,
   DashboardLinksSection,
 } from "@/components/admin/workflow/workflow-stats-sections";
 
@@ -18,13 +15,13 @@ export default async function WorkflowPage() {
     <>
       <PageHeader
         title="Editorial Workflow"
-        description="Task-driven editorial work — know exactly what to write today."
+        description="Article-centric improvements — one workspace per article, checklist inside."
       />
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-12 sm:px-6 lg:px-8">
         {!data.configured && (
           <p className="rounded-lg border border-gta-pink/20 bg-gta-pink/5 px-4 py-3 text-sm text-gta-pink/80">
-            Apply migration 012 and add SUPABASE_SERVICE_ROLE_KEY. Run:{" "}
-            <code className="text-gta-pink">supabase db push</code>
+            Apply migration 013 and add SUPABASE_SERVICE_ROLE_KEY. Run:{" "}
+            <code className="text-gta-pink">supabase/migrations/013_article_workspaces.sql</code>
           </p>
         )}
 
@@ -35,19 +32,11 @@ export default async function WorkflowPage() {
           openAiUsage={data.openAiUsage}
         />
 
-        <TodaysTasksSection todayByStatus={data.todayByStatus} />
+        <ScanWorkspacesSection />
 
-        <div id="generator">
-          <TaskGeneratorSection preview={data.generatorPreview} />
-        </div>
+        <ArticlesAttentionSection workspaces={data.activeWorkspaces} />
 
-        <WorkflowKanban kanban={data.kanban} />
-
-        <TaskDetailSection tasks={data.tasks} />
-
-        <OneClickActionsSection />
-
-        <TaskHistorySection history={data.history} />
+        <WorkspaceHistorySection history={data.history} />
 
         <DashboardLinksSection />
       </div>
