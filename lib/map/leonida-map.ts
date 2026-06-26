@@ -5,6 +5,11 @@ export const LEONIDA_MAP_ATTRIBUTION =
 export const LEONIDA_TILE_URL =
   "https://map.stateofleonida.net/tiles/YANIS/v13/normal/{z}/{x}/{y}.png";
 
+export const LEONIDA_TILE_URL_DARK =
+  "https://map.stateofleonida.net/tiles/YANIS/v13/dark/{z}/{x}/{y}.png";
+
+export const LEONIDA_COMMUNITY_MAP_URL = "https://map.stateofleonida.net/?lang=en";
+
 export const LEONIDA_MAP_BOUNDS = {
   south: -8000,
   west: -16500,

@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
+import type { Map as LeafletMap, Marker as LeafletMarker, TileLayer } from "leaflet";
 import {
   createLeonidaCrs,
   LEONIDA_MAP_ATTRIBUTION,
   LEONIDA_MAP_CONFIG,
   LEONIDA_TILE_URL,
+  LEONIDA_TILE_URL_DARK,
   leonidaLatLngBounds,
   percentToLeonidaCoords,
 } from "@/lib/map/leonida-map";
+import type { MapTileScheme } from "@/components/map/map-scheme-toggle";
 import { MAP_TYPE_COLORS } from "@/lib/map/constants";
 import type { MapPoint } from "@/lib/types/map-point";
 import { MAP_POINT_TYPE_LABELS } from "@/lib/types/map-point";
@@ -18,12 +20,14 @@ interface MapCanvasProps {
   points: MapPoint[];
   spoilerMode: boolean;
   selectedId: string | null;
+  scheme: MapTileScheme;
   onSelectPoint: (point: MapPoint) => void;
 }
 
-export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: MapCanvasProps) {
+export function MapCanvas({ points, spoilerMode, selectedId, scheme, onSelectPoint }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
+  const tileLayerRef = useRef<TileLayer | null>(null);
   const markersRef = useRef<LeafletMarker[]>([]);
   const onSelectRef = useRef(onSelectPoint);
 
@@ -51,11 +55,11 @@ export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: Ma
         maxZoom: LEONIDA_MAP_CONFIG.maxZoom,
         maxBounds: bounds,
         maxBoundsViscosity: 0.85,
-        zoomControl: true,
-        attributionControl: true,
+        zoomControl: false,
+        attributionControl: false,
       });
 
-      L.tileLayer(LEONIDA_TILE_URL, {
+      const tileLayer = L.tileLayer(LEONIDA_TILE_URL, {
         minZoom: LEONIDA_MAP_CONFIG.minZoom,
         maxZoom: LEONIDA_MAP_CONFIG.maxZoom,
         maxNativeZoom: LEONIDA_MAP_CONFIG.maxNativeZoom,
@@ -65,8 +69,12 @@ export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: Ma
         attribution: LEONIDA_MAP_ATTRIBUTION,
       }).addTo(map);
 
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+      L.control.attribution({ position: "bottomleft", prefix: false }).addTo(map);
+
       map.fitBounds(bounds);
       mapRef.current = map;
+      tileLayerRef.current = tileLayer;
 
       requestAnimationFrame(() => {
         map?.invalidateSize();
@@ -89,12 +97,19 @@ export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: Ma
         map = null;
       }
       mapRef.current = null;
+      tileLayerRef.current = null;
       markersRef.current = [];
       if (containerRef.current) {
         containerRef.current.replaceChildren();
       }
     };
   }, []);
+
+  useEffect(() => {
+    const tileLayer = tileLayerRef.current;
+    if (!tileLayer) return;
+    void tileLayer.setUrl(scheme === "dark" ? LEONIDA_TILE_URL_DARK : LEONIDA_TILE_URL);
+  }, [scheme]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -139,7 +154,7 @@ export function MapCanvas({ points, spoilerMode, selectedId, onSelectPoint }: Ma
   }, [points, spoilerMode, selectedId]);
 
   return (
-    <div className="relative aspect-[3/2] min-h-[320px] w-full overflow-hidden rounded-xl border border-white/10 bg-[#061018] shadow-2xl sm:min-h-[420px] sm:rounded-2xl">
+    <div className="relative h-full min-h-0 w-full overflow-hidden bg-[#061018]">
       <div ref={containerRef} className="absolute inset-0 z-0 h-full w-full" />
       {points.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">

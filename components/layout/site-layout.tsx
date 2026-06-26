@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/navigation/navbar";
 
@@ -6,11 +9,16 @@ interface SiteLayoutProps {
 }
 
 export function SiteLayout({ children }: SiteLayoutProps) {
+  const pathname = usePathname();
+  const isImmersiveMap = pathname === "/map";
+
   return (
     <>
       <Navbar />
-      <main className="flex-1 overflow-x-clip">{children}</main>
-      <Footer />
+      <main className={isImmersiveMap ? "flex-1 overflow-hidden" : "flex-1 overflow-x-clip"}>
+        {children}
+      </main>
+      {!isImmersiveMap && <Footer />}
     </>
   );
 }

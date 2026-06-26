@@ -3,9 +3,9 @@ import { createPageMetadata } from "@/lib/metadata";
 import { getPublishedMapPoints } from "@/lib/map/queries";
 
 export const metadata = createPageMetadata({
-  title: "GTA 6 Interactive Map",
+  title: "GTA 6 Interactive Map — State of Leonida",
   description:
-    "Explore locations, secrets, districts, vehicles, wildlife and easter eggs across Leonida and Vice City.",
+    "Explore the full GTA VI community map of Leonida and Vice City — same interactive map as State of Leonida, plus GTA6Hub guide locations.",
   path: "/map",
 });
 
