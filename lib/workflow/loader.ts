@@ -6,7 +6,6 @@ import { scoreSeoArticle } from "@/lib/seo/scoring";
 import { fetchArticlesForSeoIntelligence } from "@/lib/seo/queries";
 import { fetchEntityRowsForGaps } from "@/lib/editorial/content-gaps";
 import { getAllEditorialTasks } from "@/lib/workflow/queries";
-import { generateEditorialTaskCandidates } from "@/lib/workflow/task-generator";
 import {
   computeDailyCapacity,
   computeOpenAiUsageStats,
@@ -178,13 +177,11 @@ export async function loadWorkflowPageData(): Promise<WorkflowPageData> {
     };
   }
 
-  const [rawTasks, weeklyStats, openAiUsage, generatorPreview] =
-    await Promise.all([
-      getAllEditorialTasks(),
-      computeWeeklyWorkflowStats(),
-      computeOpenAiUsageStats(),
-      generateEditorialTaskCandidates(),
-    ]);
+  const [rawTasks, weeklyStats, openAiUsage] = await Promise.all([
+    getAllEditorialTasks(),
+    computeWeeklyWorkflowStats(),
+    computeOpenAiUsageStats(),
+  ]);
 
   const tasks = await enrichTasks(rawTasks);
   const byStatus = groupByStatus(tasks);
@@ -214,7 +211,7 @@ export async function loadWorkflowPageData(): Promise<WorkflowPageData> {
     weeklyStats,
     metrics: computeWorkflowMetrics(tasks),
     openAiUsage,
-    generatorPreview: generatorPreview.slice(0, 15),
+    generatorPreview: [],
     configured: true,
     openAiConfigured: isOpenAiConfigured(),
   };
