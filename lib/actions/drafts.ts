@@ -7,6 +7,7 @@ import { getDraftByIdAdmin } from "@/lib/drafts/queries";
 import { deleteDraftAdmin } from "@/lib/drafts/delete-draft";
 import { aiDraftService } from "@/lib/ai/ai-draft-service";
 import { articlePublishingService } from "@/lib/workflows/article-publishing-service";
+import { markOpportunityPublishedByDraftId } from "@/lib/opportunity-engine/queries";
 import {
   trackDraftApproved,
   trackDraftRejected,
@@ -150,6 +151,7 @@ export async function publishDraft(
 
   try {
     const result = await articlePublishingService.publishDraft(draft, type);
+    await markOpportunityPublishedByDraftId(id);
     await trackDraftPublished(
       id,
       draft.source_item.source,

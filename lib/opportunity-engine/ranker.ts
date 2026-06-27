@@ -49,14 +49,15 @@ export function rankEditorialOpportunities(input: {
       statusMap: input.statusMap,
     });
     if (!opp) continue;
-    if (opp.status === "ignored") continue;
+    if (opp.status === "ignored" || opp.status === "workflow_sent") continue;
     opportunities.push(opp);
   }
 
   for (const gap of input.gaps.slice(0, 12)) {
     const gapClusterKey = `gap-${gap.kind}-${gap.slug}`;
     if (opportunities.some((o) => o.clusterKey === gapClusterKey)) continue;
-    if (input.statusMap.get(gapClusterKey)?.status === "ignored") continue;
+    const gapStatus = input.statusMap.get(gapClusterKey)?.status;
+    if (gapStatus === "ignored" || gapStatus === "workflow_sent") continue;
 
     const entity: OpportunityEntity = {
       id: `${gap.kind}-${gap.slug}`,

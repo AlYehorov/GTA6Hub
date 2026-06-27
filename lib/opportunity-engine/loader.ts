@@ -156,7 +156,7 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
   const statusMap = new Map(persistedStatus);
   for (const [key, link] of draftLinks) {
     const existing = statusMap.get(key);
-    if (!existing?.aiDraftId) {
+    if (!existing?.aiDraftId || link.status === "workflow_sent") {
       statusMap.set(key, {
         status: link.status,
         aiDraftId: link.aiDraftId,

@@ -130,6 +130,34 @@ export async function getClusterKeyForDraft(draftId: string): Promise<string | n
   return (draft?.opportunity_cluster_key as string | null) ?? null;
 }
 
+export async function markOpportunityPublishedByDraftId(draftId: string): Promise<void> {
+  if (!isSupabaseAdminConfigured()) return;
+
+  const supabase = createAdminClient();
+
+  await supabase
+    .from("editorial_opportunities")
+    .update({ status: "workflow_sent" })
+    .eq("ai_draft_id", draftId);
+
+  const { data: draft, error } = await supabase
+    .from("ai_drafts")
+    .select("opportunity_cluster_key")
+    .eq("id", draftId)
+    .maybeSingle();
+
+  if (error?.message?.includes("opportunity_cluster_key")) return;
+  if (error) throw new Error(error.message);
+
+  const clusterKey = (draft?.opportunity_cluster_key as string | null) ?? null;
+  if (!clusterKey) return;
+
+  await supabase
+    .from("editorial_opportunities")
+    .update({ status: "workflow_sent", ai_draft_id: draftId })
+    .eq("cluster_key", clusterKey);
+}
+
 export async function getOpportunityDraftLinksFromAiDrafts(): Promise<
   Map<string, { aiDraftId: string; status: OpportunityStatus }>
 > {
