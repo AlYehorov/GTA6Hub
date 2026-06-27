@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/ingest",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/analytics-sync",
+      "schedule": "0 6 * * *"
     }
   ],
   "redirects": [

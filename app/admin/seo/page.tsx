@@ -49,6 +49,10 @@ export default async function SeoIntelligencePage() {
         <BrokenLinksSection links={data.brokenLinks} />
 
         <p className="text-center text-xs text-white/30">
+          <Link href="/admin/insights" className="hover:text-white/50">
+            SEO insights
+          </Link>
+          {" · "}
           <Link href="/admin/workflow" className="hover:text-white/50">
             Editorial workflow
           </Link>

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { ArticleForm } from "@/components/admin/article-form";
+import { ArticleSeoMetricsPanel } from "@/components/admin/article-seo-metrics-panel";
+import { loadArticleSeoMetrics } from "@/lib/integrations/insights/loader";
 import {
   getArticleByIdAdmin,
   getCategoriesAdmin,
@@ -23,10 +25,11 @@ export default async function EditArticlePage({ params, searchParams }: PageProp
       ? focusParam
       : undefined;
 
-  const [article, categories, tags] = await Promise.all([
+  const [article, categories, tags, seoMetrics] = await Promise.all([
     getArticleByIdAdmin(id),
     getCategoriesAdmin(),
     getTagsAdmin(),
+    loadArticleSeoMetrics(id),
   ]);
 
   if (!article) notFound();
@@ -38,6 +41,7 @@ export default async function EditArticlePage({ params, searchParams }: PageProp
         description={article.title}
       />
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <ArticleSeoMetricsPanel metrics={seoMetrics} />
         <ArticleForm
           article={article}
           categories={categories}

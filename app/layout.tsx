@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteLayout } from "@/components/layout/site-layout";
+import { AnalyticsScripts } from "@/components/analytics/analytics-scripts";
 import { rootMetadata } from "@/lib/metadata";
 import "./globals.css";
 
@@ -44,6 +45,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
       </head>
       <body className="flex min-h-full min-h-screen-safe flex-col">
+        <AnalyticsScripts />
         <SiteLayout>{children}</SiteLayout>
       </body>
     </html>

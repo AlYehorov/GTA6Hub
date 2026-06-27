@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText, Rss, Sparkles, MapPin, Trophy, Calendar, Users, Search, ListTodo, Network, Wand2 } from "lucide-react";
+import { Plus, FileText, Rss, Sparkles, MapPin, Trophy, Calendar, Users, Search, ListTodo, Network, Wand2, BarChart3, LineChart, LayoutDashboard } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { getAllArticlesAdmin } from "@/lib/articles/queries";
@@ -41,6 +41,12 @@ export default async function AdminDashboardPage() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AdminLink
+            href="/admin/studio"
+            icon={<LayoutDashboard className="size-5" />}
+            title="Editorial Studio"
+            description="Весь флоу на одной странице — guide, sources, editor, drafts"
+          />
+          <AdminLink
             href="/admin/articles"
             icon={<FileText className="size-5" />}
             title="Articles"
@@ -69,6 +75,18 @@ export default async function AdminDashboardPage() {
             icon={<ListTodo className="size-5" />}
             title="Editorial Workflow"
             description="Article workspaces — one improvement per article, checklist inside"
+          />
+          <AdminLink
+            href="/admin/insights"
+            icon={<LineChart className="size-5" />}
+            title="SEO Insights"
+            description="Unified analytics — Search Console, GA4, Clarity, traffic opportunities"
+          />
+          <AdminLink
+            href="/admin/integrations/search-console"
+            icon={<BarChart3 className="size-5" />}
+            title="Integrations"
+            description="Google Search Console, GA4, and Microsoft Clarity setup"
           />
           <AdminLink
             href="/admin/dashboard"

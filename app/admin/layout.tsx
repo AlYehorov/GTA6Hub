@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { getAdminUser } from "@/lib/auth/admin";
 import { AdminSignOutButton } from "@/components/admin/admin-sign-out-button";
+import { AdminNav } from "@/components/admin/admin-nav";
 
 export default async function AdminLayout({
   children,
@@ -14,6 +16,11 @@ export default async function AdminLayout({
         <div className="fixed right-4 top-20 z-40 sm:right-6 lg:right-8">
           <AdminSignOutButton email={user.email} />
         </div>
+      )}
+      {user && (
+        <Suspense fallback={null}>
+          <AdminNav />
+        </Suspense>
       )}
       {children}
     </>
