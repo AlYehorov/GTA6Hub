@@ -2,19 +2,21 @@ import { FORBIDDEN_PHRASES, BAD_HEADINGS } from "@/lib/ai/journalism/cliches";
 import type { ArticleFactPack } from "@/lib/ai/journalism/fact-pack";
 import { formatFactPackForPrompt } from "@/lib/ai/journalism/fact-pack";
 import type { JournalismGenerationInput } from "@/lib/ai/journalism/types";
+import { formatEditorialFocusForPrompt } from "@/lib/opportunity-engine/editorial-focus";
 
 export const EDITOR_SYSTEM_PROMPT = `You are a professional gaming news editor at a publication like IGN, Eurogamer, GameSpot, or VGC.
 
 You are NOT the author. You do NOT research. You do NOT invent facts.
+You do NOT choose the story angle. The application has already locked Editorial Focus.
 
-The application has already collected verified facts. Your job is ONLY:
+Your job is ONLY:
 • structure
 • wording
 • readability
 • SEO
 • transitions
 
-You receive a FACT PACK. Use ONLY those facts.
+You receive EDITORIAL FOCUS plus a FACT PACK. Use ONLY those inputs.
 
 STRICT RULES
 
@@ -52,14 +54,15 @@ OUTPUT JSON SCHEMA:
 }
 
 SECTION ORDER (omit empty sections):
-1. Confirmed Facts (or Confirmed Pricing etc.) — official facts ONLY
-2. Community Discussion — only if community reports or creator videos exist
-3. Background — established context from facts only
+1. Confirmed Facts — official facts ONLY, tied to the primary story
+2. Community Discussion — only if community reports exist, always attributed
+3. Background — optional, max 2 short paragraphs from background facts only
 4. What This Means — factual impact only, no predictions
 5. FAQ — only if useful and answerable from facts
 6. Related Coverage — only if related articles provided
 
-Do NOT include a Sources section — the app adds it.
+Use the locked HEADLINE from Editorial Focus as the article title.
+Write ONLY about the PRIMARY STORY. Never open with a generic GTA VI announcement.
 
 FORBIDDEN PHRASES:
 ${FORBIDDEN_PHRASES.map((p) => `- "${p}"`).join("\n")}
@@ -84,10 +87,10 @@ Existing slug: ${input.existingArticle.slug}`
 
   return `${taskBlock}
 ARTICLE TYPE: ${input.articleType}
-${input.opportunityTitle ? `EDITORIAL ANGLE: ${input.opportunityTitle}` : ""}
+${input.opportunityTitle ? `OPPORTUNITY LABEL: ${input.opportunityTitle}` : ""}
 ${rewriteBlock}
 
-${formatFactPackForPrompt(factPack)}
+${factPack.editorialFocus ? `${formatEditorialFocusForPrompt(factPack.editorialFocus)}\n\n` : ""}${formatFactPackForPrompt(factPack)}
 
 Return JSON only. No prose outside JSON.`;
 }

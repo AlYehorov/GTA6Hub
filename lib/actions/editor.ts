@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/auth/admin";
 import { generateArticleFromOpportunity } from "@/lib/opportunity-engine/article-generator";
+import type { EditorialFocusOverrides } from "@/lib/opportunity-engine/editorial-focus";
 import { deleteDraftAdmin } from "@/lib/drafts/delete-draft";
 import { getDraftByIdAdmin } from "@/lib/drafts/queries";
 import { findOpportunityById, findOpportunityByClusterKey } from "@/lib/opportunity-engine/loader";
@@ -17,7 +18,10 @@ function revalidateEditor() {
   }
 }
 
-export async function generateArticleAction(opportunityId: string): Promise<{
+export async function generateArticleAction(
+  opportunityId: string,
+  focusOverrides?: EditorialFocusOverrides
+): Promise<{
   success: boolean;
   draftId?: string;
   redirectTo?: string;
@@ -30,7 +34,7 @@ export async function generateArticleAction(opportunityId: string): Promise<{
   }
 
   try {
-    const { draftId } = await generateArticleFromOpportunity(opportunityId);
+    const { draftId } = await generateArticleFromOpportunity(opportunityId, focusOverrides);
     revalidateEditor();
     return {
       success: true,
@@ -45,7 +49,10 @@ export async function generateArticleAction(opportunityId: string): Promise<{
   }
 }
 
-export async function recreateArticleAction(opportunityId: string): Promise<{
+export async function recreateArticleAction(
+  opportunityId: string,
+  focusOverrides?: EditorialFocusOverrides
+): Promise<{
   success: boolean;
   draftId?: string;
   redirectTo?: string;
@@ -77,7 +84,7 @@ export async function recreateArticleAction(opportunityId: string): Promise<{
       }
     }
 
-    const { draftId } = await generateArticleFromOpportunity(opportunityId);
+    const { draftId } = await generateArticleFromOpportunity(opportunityId, focusOverrides);
     revalidateEditor();
     return {
       success: true,

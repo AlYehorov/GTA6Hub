@@ -9,6 +9,7 @@ import { detectOutdatedArticles } from "@/lib/editorial/outdated";
 import type { ArticleSeoInput } from "@/lib/editorial/types";
 import { getContentEngineUsageStats } from "@/lib/content-engine/usage";
 import { getOpportunityStatusMap, getOpportunityDraftLinksFromAiDrafts } from "@/lib/opportunity-engine/queries";
+import { enrichOpportunitiesWithEditorialFocus } from "@/lib/opportunity-engine/editorial-focus";
 import { rankEditorialOpportunities } from "@/lib/opportunity-engine/ranker";
 import { buildEditorialRecommendation } from "@/lib/opportunity-engine/recommendation";
 import { computeTrendingKeywords } from "@/lib/opportunity-engine/trending";
@@ -191,7 +192,7 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
   );
   const gaps = computeContentGaps(articleText, entityRows, 30);
 
-  const opportunities = rankEditorialOpportunities({
+  const rankedOpportunities = rankEditorialOpportunities({
     sources: windowSources.length > 0 ? windowSources : allSources.slice(0, 200),
     videos: videos.slice(0, 80),
     articles,
@@ -199,6 +200,12 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
     entities: linkedEntities,
     statusMap,
     limit: 12,
+  });
+
+  const opportunities = enrichOpportunitiesWithEditorialFocus(rankedOpportunities, {
+    sources: allSources,
+    videos,
+    articles,
   });
 
   const weeklyGaps: ContentGapItem[] = gaps.slice(0, 8).map((g) => ({

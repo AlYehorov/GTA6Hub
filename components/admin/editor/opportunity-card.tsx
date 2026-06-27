@@ -7,6 +7,8 @@ import { CheckCircle2, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { EditorialOpportunity } from "@/lib/opportunity-engine/types";
+import type { EditorialFocusOverrides } from "@/lib/opportunity-engine/editorial-focus";
+import { EditorialFocusPanel } from "@/components/admin/editor/editorial-focus-panel";
 import {
   generateArticleAction,
   markOpportunityIgnoredAction,
@@ -25,20 +27,23 @@ function StarRating({ stars }: { stars: number }) {
 export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportunity }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [focusOverrides, setFocusOverrides] = useState<EditorialFocusOverrides>({});
   const [feedback, setFeedback] = useState<{
     type: "error" | "success";
     message: string;
   } | null>(null);
 
+  const focus = opportunity.editorialFocus;
   const hasDraft =
     opportunity.status === "draft_generated" || Boolean(opportunity.aiDraftId);
   const showRecreate =
     Boolean(opportunity.aiDraftId) && opportunity.status !== "workflow_sent";
+  const canGenerate = focus?.focus_valid || Boolean(focusOverrides.primary_story?.trim());
 
   function runGenerate() {
     setFeedback(null);
     startTransition(async () => {
-      const result = await generateArticleAction(opportunity.id);
+      const result = await generateArticleAction(opportunity.id, focusOverrides);
       if (!result.success) {
         setFeedback({
           type: "error",
@@ -61,7 +66,7 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
   function runRecreate() {
     setFeedback(null);
     startTransition(async () => {
-      const result = await recreateArticleAction(opportunity.id);
+      const result = await recreateArticleAction(opportunity.id, focusOverrides);
       if (!result.success) {
         setFeedback({
           type: "error",
@@ -104,6 +109,10 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
             {opportunity.title}
           </h3>
           <p className="mt-1 text-sm text-white/45">{opportunity.summary}</p>
+
+          {focus && (!hasDraft || showRecreate) && (
+            <EditorialFocusPanel focus={focus} onChange={setFocusOverrides} />
+          )}
 
           {feedback && (
             <p
@@ -175,7 +184,12 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
         <div className="flex shrink-0 flex-col gap-2">
           {!hasDraft && opportunity.status !== "ignored" && (
             <>
-              <Button type="button" size="sm" disabled={pending} onClick={runGenerate}>
+              <Button
+                type="button"
+                size="sm"
+                disabled={pending || !canGenerate}
+                onClick={runGenerate}
+              >
                 {pending && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
                 {pending ? "Generating…" : "Generate Article"}
               </Button>

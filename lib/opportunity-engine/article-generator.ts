@@ -6,6 +6,12 @@ import {
   journalismResultToPackDraft,
 } from "@/lib/ai/journalism/generator";
 import { assertDraftBudget, trackAiUsageEvent } from "@/lib/content-engine/usage";
+import {
+  applyEditorialFocusOverrides,
+  assertEditorialFocusReady,
+  buildEditorialFocus,
+  type EditorialFocusOverrides,
+} from "@/lib/opportunity-engine/editorial-focus";
 import { findOpportunityById } from "@/lib/opportunity-engine/loader";
 import { upsertOpportunityStatus } from "@/lib/opportunity-engine/queries";
 import type { EditorialOpportunity } from "@/lib/opportunity-engine/types";
@@ -45,7 +51,8 @@ async function fetchExistingArticle(
 }
 
 export async function generateArticleFromOpportunity(
-  opportunityId: string
+  opportunityId: string,
+  focusOverrides?: EditorialFocusOverrides
 ): Promise<{ draftId: string; opportunity: EditorialOpportunity }> {
   await assertDraftBudget();
 
@@ -66,19 +73,33 @@ export async function generateArticleFromOpportunity(
   const entityIds = new Set(opportunity.entities.map((e) => e.id));
   const kgEntities = allKg.filter((e) => entityIds.has(e.id));
 
+  const editorialFocus = applyEditorialFocusOverrides(
+    opportunity.editorialFocus ??
+      buildEditorialFocus({
+        opportunity,
+        sources: resolvedSources,
+        videos: resolvedVideos,
+        articles: existingArticle ? [existingArticle] : [],
+      }),
+    focusOverrides
+  );
+
+  assertEditorialFocusReady(editorialFocus);
+
   const journalismInput = buildInputFromOpportunity({
     opportunity,
     sources: resolvedSources,
     videos: resolvedVideos,
     entities: kgEntities,
     existingArticle,
+    editorialFocus,
   });
 
   const { result, usage, rewriteCount } = await generateJournalismArticle(journalismInput);
   const draft = journalismResultToPackDraft(result, {
-    title: opportunity.title,
+    title: editorialFocus.headline,
     slug: opportunity.existingArticleSlug ?? undefined,
-    excerpt: opportunity.summary,
+    excerpt: editorialFocus.primary_story,
   });
 
   await trackAiUsageEvent({
@@ -109,7 +130,7 @@ export async function generateArticleFromOpportunity(
     excerpt: draft.excerpt,
     content: draft.content,
     content_blocks: draft.content_blocks ?? null,
-    category: draft.category,
+    category: draft.category || editorialFocus.article_type,
     suggested_tags: draft.tags,
     seo_title: draft.seo_title,
     seo_description: draft.seo_description,

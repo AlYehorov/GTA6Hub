@@ -1,4 +1,5 @@
 import type { JournalismGenerationInput } from "@/lib/ai/journalism/types";
+import type { EditorialFocus } from "@/lib/opportunity-engine/editorial-focus";
 
 export type FactConfidence = "Low" | "Medium" | "High";
 
@@ -36,6 +37,7 @@ export interface ArticleFactPack {
   articleType: "news" | "guide";
   opportunityTitle?: string;
   existingArticle?: { title: string; slug: string; excerpt: string | null };
+  editorialFocus?: EditorialFocus;
   officialFacts: OfficialFact[];
   communityReports: CommunityReport[];
   videos: FactPackVideo[];
@@ -105,6 +107,10 @@ function countWords(texts: string[]): number {
 }
 
 export function buildArticleFactPack(input: JournalismGenerationInput): ArticleFactPack {
+  if (input.editorialFocus) {
+    return buildFactPackFromEditorialFocus(input, input.editorialFocus);
+  }
+
   const sortedSources = [...input.sources].sort(
     (a, b) => sourceTier(a.platform, a.sourceLabel) - sourceTier(b.platform, b.sourceLabel)
   );
@@ -244,6 +250,93 @@ function dedupeCommunityReports(reports: CommunityReport[]): CommunityReport[] {
     result.push(report);
   }
   return result;
+}
+
+function buildFactPackFromEditorialFocus(
+  input: JournalismGenerationInput,
+  focus: EditorialFocus
+): ArticleFactPack {
+  const sortedSources = [...input.sources].sort(
+    (a, b) => sourceTier(a.platform, a.sourceLabel) - sourceTier(b.platform, b.sourceLabel)
+  );
+
+  const officialFacts: OfficialFact[] = [
+    ...focus.official_points.map((text) => ({
+      text,
+      source: "Rockstar / Official",
+      sourceUrl: sortedSources.find((source) => isOfficialSource(source.platform, source.sourceLabel))?.url ?? "",
+    })),
+    ...focus.secondary_facts.map((text) => ({
+      text,
+      source: "Official supporting fact",
+      sourceUrl: "",
+    })),
+  ];
+
+  const communityReports: CommunityReport[] = focus.community_points.map((text) => ({
+    text,
+    source: "Community",
+    sourceUrl: "",
+    confidence: "Low" as const,
+    verified: false as const,
+  }));
+
+  const videos: FactPackVideo[] = input.videos.map((video) => {
+    const official = /rockstar/i.test(video.title) || /rockstar/i.test(video.url);
+    return {
+      title: video.title,
+      channel: official ? "Rockstar Games" : "YouTube Creator",
+      url: video.url,
+      youtubeId: video.youtube_id,
+      description: video.description.slice(0, 400),
+      tier: official ? "official" : "creator",
+    };
+  });
+
+  const relatedArticles: RelatedArticleFact[] = focus.existing_articles.map((article) => ({
+    title: article.title,
+    slug: article.slug,
+    href: article.href,
+  }));
+
+  const entities = focus.related_entities.map((entity) => ({
+    kind: entity.kind,
+    slug: entity.slug,
+    title: entity.title,
+    href: entity.href,
+  }));
+
+  const verifiedTexts = [
+    focus.primary_story,
+    ...focus.secondary_facts,
+    ...focus.official_points,
+  ];
+
+  return {
+    articleType: input.articleType,
+    opportunityTitle: focus.headline,
+    existingArticle: input.existingArticle,
+    editorialFocus: focus,
+    officialFacts: dedupeOfficialFacts(officialFacts),
+    communityReports: dedupeCommunityReports(communityReports),
+    videos,
+    relatedArticles,
+    entities,
+    seo: {
+      primaryKeyword: focus.seo_keyword,
+      secondaryKeywords: [focus.search_intent, focus.article_type],
+      internalLinks: input.internalLinkTargets ?? entities.map((entity) => entity.href),
+    },
+    sourceCards: sortedSources.map((source) => ({
+      label: source.label,
+      platform: source.platform,
+      url: source.url,
+      tier: sourceTier(source.platform, source.sourceLabel),
+    })),
+    verifiedWordCount: countWords(verifiedTexts),
+    hasOfficialFacts: focus.official_points.length > 0 || focus.secondary_facts.length > 0,
+    hasCommunityReports: focus.community_points.length > 0,
+  };
 }
 
 export function formatFactPackForPrompt(pack: ArticleFactPack): string {

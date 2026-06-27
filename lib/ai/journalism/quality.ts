@@ -48,6 +48,36 @@ export function runEditorQualityCheck(
   const failures: QualityFailure[] = [];
   const body = allParagraphText(editor);
   const summary = editor.summary ?? "";
+  const focus = factPack.editorialFocus;
+
+  if (focus) {
+    if (
+      editor.title &&
+      focus.headline &&
+      !editor.title.toLowerCase().includes(focus.headline.toLowerCase().slice(0, 24))
+    ) {
+      failures.push({
+        code: "headline_drift",
+        message: "Generated title drifted away from locked Editorial Focus headline",
+      });
+    }
+
+    const combined = `${summary}\n${body}`.toLowerCase();
+    const storyNeedle = focus.primary_story.toLowerCase().slice(0, 40);
+    if (storyNeedle && !combined.includes(storyNeedle.slice(0, 24))) {
+      failures.push({
+        code: "story_drift",
+        message: "Article body does not stay on the locked primary story",
+      });
+    }
+
+    if (/officially announced\.\.\.|gta vi officially announced/i.test(combined)) {
+      failures.push({
+        code: "generic_story",
+        message: "Generic GTA VI announcement angle detected instead of focused story",
+      });
+    }
+  }
 
   const cliche = containsForbiddenPhrase(`${summary}\n${body}`);
   if (cliche) {

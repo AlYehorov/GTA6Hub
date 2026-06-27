@@ -1,3 +1,5 @@
+import type { EditorialFocus } from "@/lib/opportunity-engine/editorial-focus";
+
 export type SourceBadge = "Official" | "Community" | "Rumor" | "Unconfirmed";
 export type ConfidenceLabel = "High" | "Medium" | "Low";
 
@@ -71,9 +73,11 @@ export interface JournalismArticleJson {
   tags: string[];
 }
 
+
 export interface JournalismGenerationInput {
   articleType: "news" | "guide";
   primarySourceLabel: string;
+  editorialFocus?: EditorialFocus;
   opportunityTitle?: string;
   targetKeyword?: string;
   contentType?: string;

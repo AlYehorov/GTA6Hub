@@ -196,6 +196,10 @@ export function compileEditorArticle(
   input: JournalismGenerationInput
 ): JournalismDraftResult {
   const journalism = editorJsonToJournalismJson(editor, factPack, input);
+  if (input.editorialFocus?.headline) {
+    journalism.hero.headline = input.editorialFocus.headline;
+    journalism.seo.title = input.editorialFocus.headline.slice(0, 60);
+  }
   return compileJournalismArticle(journalism, input);
 }
 

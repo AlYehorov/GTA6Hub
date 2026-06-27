@@ -25,6 +25,7 @@ import type { ContentPlanIdea } from "@/lib/content-engine/types";
 import type { EditorialOpportunity } from "@/lib/opportunity-engine/types";
 import type { Video } from "@/lib/types/video";
 import type { ArticleSeoInput } from "@/lib/editorial/types";
+import { mapFocusArticleTypeToDraftType } from "@/lib/opportunity-engine/editorial-focus";
 import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
 import { kgEntityHref } from "@/lib/knowledge-graph/types";
 import type { KgEntityKind } from "@/lib/knowledge-graph/types";
@@ -89,6 +90,7 @@ export function buildInputFromOpportunity(input: {
   videos: Video[];
   entities: KgEntity[];
   existingArticle: ArticleSeoInput | null;
+  editorialFocus?: import("@/lib/opportunity-engine/editorial-focus").EditorialFocus;
 }): JournalismGenerationInput {
   const primaryLabel =
     input.sources.find((source) => source.source_label === "official")?.source_label ??
@@ -96,10 +98,13 @@ export function buildInputFromOpportunity(input: {
     "community";
 
   return {
-    articleType: input.opportunity.articleType,
+    articleType: input.editorialFocus
+      ? mapFocusArticleTypeToDraftType(input.editorialFocus.article_type)
+      : input.opportunity.articleType,
     primarySourceLabel: primaryLabel,
-    opportunityTitle: input.opportunity.title,
-    targetKeyword: input.opportunity.targetKeyword,
+    editorialFocus: input.editorialFocus,
+    opportunityTitle: input.editorialFocus?.headline ?? input.opportunity.title,
+    targetKeyword: input.editorialFocus?.seo_keyword ?? input.opportunity.targetKeyword,
     contentType: input.opportunity.contentType,
     existingArticle: input.existingArticle
       ? {

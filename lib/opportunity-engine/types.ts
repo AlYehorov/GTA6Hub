@@ -1,4 +1,5 @@
 import type { SourcePlatform } from "@/lib/types/source";
+import type { EditorialFocus } from "@/lib/opportunity-engine/editorial-focus";
 
 export type ConfidenceLevel = "Low" | "Medium" | "High";
 export type TrafficLevel = "Low" | "Medium" | "High" | "Very High";
@@ -43,6 +44,7 @@ export interface EditorialOpportunity {
   status: OpportunityStatus;
   aiDraftId: string | null;
   workspaceId: string | null;
+  editorialFocus?: EditorialFocus;
 }
 
 export interface BriefingIntake {
