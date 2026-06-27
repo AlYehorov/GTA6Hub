@@ -2,17 +2,18 @@ import {
   createChatCompletionDetailed,
   isOpenAiConfigured,
 } from "@/lib/ai/openai-client";
-import { compileJournalismArticle } from "@/lib/ai/journalism/compiler";
+import { compileEditorArticle } from "@/lib/ai/journalism/compiler";
+import { buildArticleFactPack } from "@/lib/ai/journalism/fact-pack";
 import {
-  JOURNALISM_ARTICLE_SYSTEM_PROMPT,
-  buildJournalismUserPrompt,
+  EDITOR_SYSTEM_PROMPT,
+  buildEditorUserPrompt,
 } from "@/lib/ai/journalism/prompts";
 import {
   formatQualityFailures,
-  runQualityCheck,
+  runEditorQualityCheck,
 } from "@/lib/ai/journalism/quality";
 import type {
-  JournalismArticleJson,
+  EditorArticleJson,
   JournalismDraftResult,
   JournalismGenerationInput,
 } from "@/lib/ai/journalism/types";
@@ -25,6 +26,8 @@ import type { EditorialOpportunity } from "@/lib/opportunity-engine/types";
 import type { Video } from "@/lib/types/video";
 import type { ArticleSeoInput } from "@/lib/editorial/types";
 import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
+import { kgEntityHref } from "@/lib/knowledge-graph/types";
+import type { KgEntityKind } from "@/lib/knowledge-graph/types";
 
 const MAX_REWRITE_ATTEMPTS = 1;
 
@@ -33,16 +36,6 @@ function extractYoutubeId(url: string): string | undefined {
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
   );
   return match?.[1];
-}
-
-function mapSourceKind(
-  platform: string
-): "rockstar_newswire" | "reddit" | "youtube" | "community" | "official_trailer" {
-  if (platform === "rockstar_newswire") return "rockstar_newswire";
-  if (platform === "rockstar_youtube") return "official_trailer";
-  if (platform === "reddit") return "reddit";
-  if (platform.includes("youtube")) return "youtube";
-  return "community";
 }
 
 export function buildInputFromSource(
@@ -57,18 +50,21 @@ export function buildInputFromSource(
         id: source.id,
         platform: source.source,
         label: SOURCE_PLATFORM_LABELS[source.source],
+        sourceLabel: source.source_label,
         title: source.title,
         url: source.source_url,
         excerpt: source.content,
+        publishedAt: source.published_at,
       },
     ],
     videos: [],
-    entities: entities.map((e) => ({
-      id: e.id,
-      kind: e.kind,
-      slug: e.slug,
-      title: e.title,
-      image_url: e.image_url,
+    entities: entities.map((entity) => ({
+      id: entity.id,
+      kind: entity.kind,
+      slug: entity.slug,
+      title: entity.title,
+      image_url: entity.image_url,
+      href: kgEntityHref(entity.kind as KgEntityKind, entity.slug),
     })),
   };
 }
@@ -95,7 +91,7 @@ export function buildInputFromOpportunity(input: {
   existingArticle: ArticleSeoInput | null;
 }): JournalismGenerationInput {
   const primaryLabel =
-    input.sources.find((s) => s.source_label === "official")?.source_label ??
+    input.sources.find((source) => source.source_label === "official")?.source_label ??
     input.sources[0]?.source_label ??
     "community";
 
@@ -112,115 +108,54 @@ export function buildInputFromOpportunity(input: {
           excerpt: input.existingArticle.excerpt,
         }
       : undefined,
-    sources: input.sources.map((s) => ({
-      id: s.id,
-      platform: s.source,
-      label: SOURCE_PLATFORM_LABELS[s.source],
-      title: s.title,
-      url: s.source_url,
-      excerpt: s.content,
+    sources: input.sources.map((source) => ({
+      id: source.id,
+      platform: source.source,
+      label: SOURCE_PLATFORM_LABELS[source.source],
+      sourceLabel: source.source_label,
+      title: source.title,
+      url: source.source_url,
+      excerpt: source.content,
+      publishedAt: source.published_at,
     })),
-    videos: input.videos.map((v) => ({
-      id: v.id,
-      title: v.title,
-      url: v.source_url,
-      youtube_id: extractYoutubeId(v.source_url),
-      description: v.description,
+    videos: input.videos.map((video) => ({
+      id: video.id,
+      title: video.title,
+      url: video.source_url,
+      youtube_id: extractYoutubeId(video.source_url),
+      description: video.description,
     })),
-    entities: input.entities.map((e) => ({
-      id: e.id,
-      kind: e.kind,
-      slug: e.slug,
-      title: e.title,
-      image_url: e.image_url,
+    entities: input.entities.map((entity) => ({
+      id: entity.id,
+      kind: entity.kind,
+      slug: entity.slug,
+      title: entity.title,
+      image_url: entity.image_url,
+      href: kgEntityHref(entity.kind as KgEntityKind, entity.slug),
     })),
     internalLinkTargets: input.opportunity.internalLinkTargets,
   };
 }
 
-async function callJournalismModel(
+async function callEditorModel(
   input: JournalismGenerationInput,
+  factPack: ReturnType<typeof buildArticleFactPack>,
   rewriteNotes?: string
-): Promise<{ json: JournalismArticleJson; usage: { prompt_tokens: number; completion_tokens: number } }> {
+): Promise<{ json: EditorArticleJson; usage: { prompt_tokens: number; completion_tokens: number } }> {
   const { content, usage } = await createChatCompletionDetailed({
     messages: [
-      { role: "system", content: JOURNALISM_ARTICLE_SYSTEM_PROMPT },
-      { role: "user", content: buildJournalismUserPrompt(input, rewriteNotes) },
+      { role: "system", content: EDITOR_SYSTEM_PROMPT },
+      { role: "user", content: buildEditorUserPrompt(input, factPack, rewriteNotes) },
     ],
-    temperature: 0.45,
-    max_tokens: 3200,
+    temperature: 0.35,
+    max_tokens: 2800,
     response_format: { type: "json_object" },
     feature: "journalism_article",
-    errorPrefix: "Journalism article generation failed",
+    errorPrefix: "Editor article generation failed",
   });
 
-  const json = JSON.parse(content) as JournalismArticleJson;
-  enrichBlocksFromInput(json, input);
+  const json = JSON.parse(content) as EditorArticleJson;
   return { json, usage };
-}
-
-function enrichBlocksFromInput(
-  json: JournalismArticleJson,
-  input: JournalismGenerationInput
-): void {
-  if (!Array.isArray(json.blocks)) json.blocks = [];
-
-  const hasSources = json.blocks.some((b) => b.type === "sources");
-  if (!hasSources && input.sources.length > 0) {
-    json.blocks.push({
-      type: "sources",
-      items: input.sources.map((s) => ({
-        label: s.label,
-        kind: mapSourceKind(s.platform),
-        url: s.url,
-        source_id: s.id,
-      })),
-    });
-  }
-
-  const hasYoutube = json.blocks.some((b) => b.type === "youtube");
-  if (!hasYoutube) {
-    for (const video of input.videos) {
-      const youtube_id = video.youtube_id ?? extractYoutubeId(video.url);
-      if (!youtube_id) continue;
-      json.blocks.push({
-        type: "youtube",
-        youtube_id,
-        title: video.title,
-      });
-    }
-  }
-
-  const hasImage = json.blocks.some((b) => b.type === "image");
-  if (!hasImage) {
-    const heroImage =
-      input.entities.find((e) => e.image_url)?.image_url ??
-      input.sources.find((s) => /rockstar|newswire|youtube/i.test(s.platform))?.url;
-    if (heroImage && heroImage.startsWith("http")) {
-      json.blocks.unshift({
-        type: "image",
-        url: heroImage,
-        alt: input.opportunityTitle ?? input.sources[0]?.title ?? "GTA VI",
-        credit: "Rockstar Games",
-      });
-    }
-  }
-
-  if (!json.hero?.source_badge) {
-    json.hero = {
-      headline: json.hero?.headline ?? "",
-      summary: json.hero?.summary ?? "",
-      source_badge:
-        input.primarySourceLabel === "official"
-          ? "Official"
-          : input.primarySourceLabel === "rumor"
-            ? "Rumor"
-            : input.primarySourceLabel === "unconfirmed"
-              ? "Unconfirmed"
-              : "Community",
-      confidence_label: json.hero?.confidence_label ?? "Medium",
-    };
-  }
 }
 
 export async function generateJournalismArticle(
@@ -230,9 +165,11 @@ export async function generateJournalismArticle(
   usage: { prompt_tokens: number; completion_tokens: number };
   rewriteCount: number;
 }> {
+  const factPack = buildArticleFactPack(input);
+
   if (!isOpenAiConfigured()) {
     return {
-      result: buildMockJournalismDraft(input),
+      result: buildMockEditorDraft(input, factPack),
       usage: { prompt_tokens: 0, completion_tokens: 0 },
       rewriteCount: 0,
     };
@@ -243,16 +180,16 @@ export async function generateJournalismArticle(
   let rewriteNotes: string | undefined;
 
   for (let attempt = 0; attempt <= MAX_REWRITE_ATTEMPTS; attempt++) {
-    const { json, usage } = await callJournalismModel(input, rewriteNotes);
+    const { json, usage } = await callEditorModel(input, factPack, rewriteNotes);
     totalUsage = {
       prompt_tokens: totalUsage.prompt_tokens + usage.prompt_tokens,
       completion_tokens: totalUsage.completion_tokens + usage.completion_tokens,
     };
 
-    const report = runQualityCheck(json);
+    const report = runEditorQualityCheck(json, factPack);
     if (report.passed) {
       return {
-        result: compileJournalismArticle(json, input),
+        result: compileEditorArticle(json, factPack, input),
         usage: totalUsage,
         rewriteCount,
       };
@@ -260,7 +197,7 @@ export async function generateJournalismArticle(
 
     if (attempt >= MAX_REWRITE_ATTEMPTS) {
       return {
-        result: compileJournalismArticle(json, input),
+        result: compileEditorArticle(json, factPack, input),
         usage: totalUsage,
         rewriteCount,
       };
@@ -271,7 +208,7 @@ export async function generateJournalismArticle(
   }
 
   return {
-    result: buildMockJournalismDraft(input),
+    result: buildMockEditorDraft(input, factPack),
     usage: totalUsage,
     rewriteCount,
   };
@@ -305,9 +242,7 @@ export function journalismResultToPackDraft(
   };
 }
 
-export function journalismResultToAiArticle(
-  result: JournalismDraftResult
-): AiGeneratedArticle {
+export function journalismResultToAiArticle(result: JournalismDraftResult): AiGeneratedArticle {
   return {
     title: result.title,
     excerpt: result.excerpt,
@@ -320,67 +255,58 @@ export function journalismResultToAiArticle(
   };
 }
 
-function buildMockJournalismDraft(
-  input: JournalismGenerationInput
+function buildMockEditorDraft(
+  input: JournalismGenerationInput,
+  factPack: ReturnType<typeof buildArticleFactPack>
 ): JournalismDraftResult {
-  const source = input.sources[0];
-  const headline = input.opportunityTitle ?? source?.title ?? "GTA VI Update";
-  const summary = source?.excerpt?.slice(0, 200) ?? "Latest GTA VI development coverage.";
+  const headline = input.opportunityTitle ?? factPack.officialFacts[0]?.text ?? "GTA VI Update";
+  const summary =
+    factPack.officialFacts[0]?.text?.slice(0, 200) ??
+    factPack.communityReports[0]?.text?.slice(0, 200) ??
+    "Latest GTA VI coverage.";
 
-  const json: JournalismArticleJson = {
-    hero: {
-      headline,
-      summary,
-      source_badge:
-        input.primarySourceLabel === "official" ? "Official" : "Community",
-      confidence_label: "Medium",
-    },
-    blocks: [
-      { type: "heading", level: 2, text: "What happened?" },
-      {
-        type: "paragraph",
-        text: summary,
-      },
-      { type: "heading", level: 2, text: "Confirmed Facts" },
-      {
-        type: "list",
-        ordered: false,
-        items: source ? [source.title] : ["No official confirmation in this mock draft."],
-      },
-      { type: "heading", level: 2, text: "Why It Matters" },
-      {
-        type: "paragraph",
-        text: "This update shapes how players read Rockstar's rollout ahead of launch.",
-      },
-      { type: "heading", level: 2, text: "What's Next" },
-      {
-        type: "paragraph",
-        text: "Rockstar has not announced a follow-up. GTA6Hub will update if official material drops.",
-      },
-      {
-        type: "sources",
-        items: input.sources.map((s) => ({
-          label: s.label,
-          kind: mapSourceKind(s.platform),
-          url: s.url,
-          source_id: s.id,
-        })),
-      },
+  const sections: EditorArticleJson["sections"] = [];
+
+  if (factPack.officialFacts.length > 0) {
+    sections.push({
+      heading: "Confirmed Facts",
+      paragraphs: factPack.officialFacts.slice(0, 4).map((fact) => fact.text),
+    });
+  }
+
+  if (factPack.communityReports.length > 0) {
+    sections.push({
+      heading: "Community Discussion",
+      paragraphs: factPack.communityReports
+        .slice(0, 3)
+        .map((report) => `Community reports suggest ${report.text} This has not been confirmed by Rockstar.`),
+    });
+  }
+
+  sections.push({
+    heading: "What This Means",
+    paragraphs: [
+      factPack.hasOfficialFacts
+        ? "Rockstar's official materials define what players can treat as confirmed ahead of launch."
+        : "This story currently rests on unverified community discussion.",
     ],
+  });
+
+  const editor: EditorArticleJson = {
+    title: headline.slice(0, 100),
+    summary,
+    sections,
+    faq: [],
     seo: {
       title: headline.slice(0, 60),
-      meta_description: summary.slice(0, 155),
+      description: summary.slice(0, 155),
       slug: headline.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 80),
-      og_title: headline.slice(0, 60),
-      twitter_title: headline.slice(0, 60),
-      canonical: "",
-      keywords: input.targetKeyword ? [input.targetKeyword] : [],
-      excerpt: summary,
+      keywords: factPack.seo.secondaryKeywords,
     },
-    confidence: input.primarySourceLabel === "official" ? 0.85 : 0.55,
+    confidence: factPack.hasOfficialFacts ? 0.85 : 0.55,
     category: "Analysis",
     tags: [],
   };
 
-  return compileJournalismArticle(json, input);
+  return compileEditorArticle(editor, factPack, input);
 }

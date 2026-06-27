@@ -18,6 +18,40 @@ export const FORBIDDEN_PHRASES = [
   "fans have been waiting",
   "ever-evolving world",
   "landscape of gaming",
+  "it is important to understand",
+  "this is exciting",
+  "this matters because",
+  "moving forward",
+  "interesting information",
+  "important notes",
+  "overview",
+  "rockstar is expected",
+  "more information will likely",
+  "it seems",
+  "it may",
+  "likely to announce",
+  "expected to reveal",
+  "poised to",
+  "set to unveil",
+] as const;
+
+export const PREDICTION_PATTERNS = [
+  /\brockstar is expected\b/i,
+  /\bwill likely\b/i,
+  /\bit seems\b/i,
+  /\bit may\b/i,
+  /\bprobably\b/i,
+  /\bwe expect\b/i,
+  /\banticipated to\b/i,
+  /\bmore information will\b/i,
+] as const;
+
+export const BAD_HEADINGS = [
+  "interesting information",
+  "overview",
+  "important notes",
+  "everything we know",
+  "key takeaways",
 ] as const;
 
 export const GENERIC_INTRO_PATTERNS = [
@@ -32,6 +66,13 @@ export function containsForbiddenPhrase(text: string): string | null {
   const lower = text.toLowerCase();
   for (const phrase of FORBIDDEN_PHRASES) {
     if (lower.includes(phrase)) return phrase;
+  }
+  return null;
+}
+
+export function containsPrediction(text: string): string | null {
+  for (const pattern of PREDICTION_PATTERNS) {
+    if (pattern.test(text)) return pattern.source;
   }
   return null;
 }

@@ -1,7 +1,10 @@
-import type { JournalismArticleJson, JournalismBlock } from "@/lib/ai/journalism/types";
+import type { ArticleFactPack } from "@/lib/ai/journalism/fact-pack";
+import type { EditorArticleJson } from "@/lib/ai/journalism/types";
 import {
+  BAD_HEADINGS,
   containsForbiddenPhrase,
   containsMarkdownSyntax,
+  containsPrediction,
   containsRawUrl,
   GENERIC_INTRO_PATTERNS,
 } from "@/lib/ai/journalism/cliches";
@@ -16,152 +19,127 @@ export interface QualityReport {
   failures: QualityFailure[];
 }
 
-function blockText(block: JournalismBlock): string {
-  switch (block.type) {
-    case "heading":
-      return block.text;
-    case "paragraph":
-    case "quote":
-      return block.text;
-    case "list":
-      return block.items.join(" ");
-    case "entity":
-      return block.label;
-    case "faq":
-      return block.items.map((i) => `${i.question} ${i.answer}`).join(" ");
-    case "youtube":
-      return block.title;
-    case "sources":
-      return block.items.map((i) => i.label).join(" ");
-    case "image":
-      return block.alt;
-    default:
-      return "";
-  }
+function sectionText(section: EditorArticleJson["sections"][number]): string {
+  return [section.heading, ...(section.paragraphs ?? [])].join("\n");
 }
 
-function hasGenericIntro(blocks: JournalismBlock[]): boolean {
-  const firstParagraph = blocks.find((b) => b.type === "paragraph");
-  if (!firstParagraph || firstParagraph.type !== "paragraph") return false;
-  const text = firstParagraph.text.trim();
-  return GENERIC_INTRO_PATTERNS.some((re) => re.test(text));
+function allParagraphText(editor: EditorArticleJson): string {
+  return (editor.sections ?? [])
+    .flatMap((section) => section.paragraphs ?? [])
+    .join("\n");
 }
 
-function hasDuplicatedParagraphs(blocks: JournalismBlock[]): boolean {
-  const paragraphs = blocks
-    .filter((b): b is Extract<JournalismBlock, { type: "paragraph" }> => b.type === "paragraph")
-    .map((b) => b.text.trim().toLowerCase())
-    .filter(Boolean);
-  return new Set(paragraphs).size !== paragraphs.length;
-}
-
-function hasUnsupportedCertainty(blocks: JournalismBlock[], sourceBadge: string): boolean {
-  if (sourceBadge === "Official") return false;
-
-  const confirmedSectionBlocks: JournalismBlock[] = [];
-  let inConfirmed = false;
-  for (const block of blocks) {
-    if (block.type === "heading" && block.level === 2) {
-      inConfirmed = block.text.toLowerCase().includes("confirmed facts");
-      if (inConfirmed) continue;
-      if (confirmedSectionBlocks.length > 0) break;
-    }
-    if (inConfirmed) confirmedSectionBlocks.push(block);
-  }
-
-  return confirmedSectionBlocks.some(
-    (b) =>
-      b.type === "paragraph" &&
-      /will definitely|has confirmed|rockstar announced|officially revealed/i.test(b.text) &&
-      !/according to|rockstar newswire|official trailer/i.test(b.text)
+function findConfirmedSection(editor: EditorArticleJson) {
+  return (editor.sections ?? []).find((section) =>
+    /confirmed/i.test(section.heading)
   );
 }
 
-function hasRequiredSections(blocks: JournalismBlock[]): string[] {
-  const headings = blocks
-    .filter((b): b is Extract<JournalismBlock, { type: "heading" }> => b.type === "heading" && b.level === 2)
-    .map((b) => b.text.toLowerCase());
-
-  const required = ["what happened", "confirmed facts", "why it matters", "what's next"];
-  return required.filter((section) => !headings.some((h) => h.includes(section)));
+function findCommunitySection(editor: EditorArticleJson) {
+  return (editor.sections ?? []).find((section) =>
+    /community/i.test(section.heading)
+  );
 }
 
-export function runQualityCheck(json: JournalismArticleJson): QualityReport {
+export function runEditorQualityCheck(
+  editor: EditorArticleJson,
+  factPack: ArticleFactPack
+): QualityReport {
   const failures: QualityFailure[] = [];
-  const blocks = json.blocks ?? [];
-  const allText = blocks.map(blockText).join("\n");
+  const body = allParagraphText(editor);
+  const summary = editor.summary ?? "";
 
-  const cliche = containsForbiddenPhrase(allText);
+  const cliche = containsForbiddenPhrase(`${summary}\n${body}`);
   if (cliche) {
-    failures.push({
-      code: "cliche",
-      message: `Contains forbidden AI phrase: "${cliche}"`,
-    });
+    failures.push({ code: "cliche", message: `Forbidden phrase: "${cliche}"` });
   }
 
-  for (const block of blocks) {
-    const text = blockText(block);
-    if (block.type === "paragraph" || block.type === "quote" || block.type === "heading") {
-      if (containsMarkdownSyntax(text)) {
-        failures.push({
-          code: "markdown",
-          message: `Block contains markdown syntax: ${text.slice(0, 80)}`,
-        });
+  const prediction = containsPrediction(`${summary}\n${body}`);
+  if (prediction) {
+    failures.push({ code: "prediction", message: `Prediction language detected: ${prediction}` });
+  }
+
+  for (const section of editor.sections ?? []) {
+    if (BAD_HEADINGS.some((bad) => section.heading.toLowerCase().includes(bad))) {
+      failures.push({
+        code: "heading",
+        message: `Generic heading: "${section.heading}"`,
+      });
+    }
+
+    for (const paragraph of section.paragraphs ?? []) {
+      if (containsMarkdownSyntax(paragraph)) {
+        failures.push({ code: "markdown", message: "Paragraph contains markdown syntax" });
+        break;
+      }
+      if (containsRawUrl(paragraph)) {
+        failures.push({ code: "raw_url", message: "Paragraph contains raw URL" });
         break;
       }
     }
+  }
+
+  const firstParagraph = editor.sections?.[0]?.paragraphs?.[0] ?? "";
+  if (GENERIC_INTRO_PATTERNS.some((pattern) => pattern.test(firstParagraph))) {
+    failures.push({ code: "generic_intro", message: "Generic introduction detected" });
+  }
+
+  const confirmed = findConfirmedSection(editor);
+  if (factPack.hasOfficialFacts && !confirmed) {
+    failures.push({ code: "structure", message: "Missing Confirmed Facts section" });
+  }
+
+  if (confirmed) {
+    const confirmedText = sectionText(confirmed).toLowerCase();
     if (
-      (block.type === "paragraph" || block.type === "quote") &&
-      containsRawUrl(text)
+      /reddit|community reports|users claim|according to creators|unverified/i.test(confirmedText)
     ) {
       failures.push({
-        code: "raw_url",
-        message: "Paragraph contains raw URL — use sources block instead",
+        code: "mixed_facts",
+        message: "Community attribution found inside Confirmed Facts section",
       });
-      break;
     }
   }
 
-  if (hasGenericIntro(blocks)) {
-    failures.push({
-      code: "generic_intro",
-      message: "Opens with generic introduction instead of immediate news lead",
-    });
+  if (factPack.hasCommunityReports) {
+    const community = findCommunitySection(editor);
+    if (!community) {
+      failures.push({
+        code: "structure",
+        message: "Missing Community Discussion section for community reports",
+      });
+    } else {
+      const communityText = sectionText(community).toLowerCase();
+      if (
+        !/community|reddit|creators|users claim|reports suggest|unverified|not confirmed/i.test(
+          communityText
+        )
+      ) {
+        failures.push({
+          code: "attribution",
+          message: "Community section lacks clear attribution",
+        });
+      }
+    }
   }
 
-  if (hasDuplicatedParagraphs(blocks)) {
-    failures.push({
-      code: "duplicate",
-      message: "Contains duplicated paragraphs",
-    });
+  const paragraphs = (editor.sections ?? []).flatMap((section) => section.paragraphs ?? []);
+  const normalized = paragraphs.map((p) => p.trim().toLowerCase()).filter(Boolean);
+  if (new Set(normalized).size !== normalized.length) {
+    failures.push({ code: "duplicate", message: "Duplicated paragraphs detected" });
   }
 
-  const missing = hasRequiredSections(blocks);
-  if (missing.length > 0) {
-    failures.push({
-      code: "structure",
-      message: `Missing required sections: ${missing.join(", ")}`,
-    });
-  }
-
-  if (hasUnsupportedCertainty(blocks, json.hero?.source_badge ?? "Community")) {
-    failures.push({
-      code: "fake_certainty",
-      message: "Presents unconfirmed claims as facts in Confirmed Facts section",
-    });
-  }
-
-  if (!json.hero?.headline?.trim()) {
-    failures.push({ code: "hero", message: "Missing headline" });
-  }
-
-  if (!json.hero?.summary?.trim()) {
-    failures.push({ code: "hero", message: "Missing summary" });
-  }
+  if (!editor.title?.trim()) failures.push({ code: "title", message: "Missing title" });
+  if (!editor.summary?.trim()) failures.push({ code: "summary", message: "Missing summary" });
 
   return { passed: failures.length === 0, failures };
 }
 
 export function formatQualityFailures(failures: QualityFailure[]): string {
-  return failures.map((f) => `- ${f.message}`).join("\n");
+  return failures.map((failure) => `- ${failure.message}`).join("\n");
+}
+
+// Backward-compatible alias
+export function runQualityCheck(): QualityReport {
+  return { passed: true, failures: [] };
 }

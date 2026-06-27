@@ -37,6 +37,31 @@ export type JournalismBlock =
   | { type: "sources"; items: SourceCardItem[] }
   | { type: "image"; url: string; alt: string; credit?: string };
 
+export interface EditorArticleJson {
+  title: string;
+  summary: string;
+  hero_caption?: string;
+  sections: Array<{
+    heading: string;
+    paragraphs: string[];
+  }>;
+  faq?: Array<{ question: string; answer: string }>;
+  internal_links?: Array<{ label: string; href: string }>;
+  related_entities?: Array<{ kind: string; slug: string; label: string }>;
+  seo: {
+    title: string;
+    description: string;
+    slug?: string;
+    og_title?: string;
+    twitter_title?: string;
+    canonical?: string;
+    keywords?: string[];
+  };
+  confidence?: number;
+  category?: string;
+  tags?: string[];
+}
+
 export interface JournalismArticleJson {
   hero: JournalismHero;
   blocks: JournalismBlock[];
@@ -57,9 +82,11 @@ export interface JournalismGenerationInput {
     id?: string;
     platform: string;
     label: string;
+    sourceLabel: string;
     title: string;
     url: string;
     excerpt: string;
+    publishedAt?: string | null;
   }>;
   videos: Array<{
     id?: string;
