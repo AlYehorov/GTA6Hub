@@ -39,10 +39,9 @@ const maskSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
 </svg>`;
 
 const appleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180">
-  <rect width="180" height="180" rx="40" fill="#09090b"/>
-  <rect x="4" y="4" width="172" height="172" rx="36" fill="none" stroke="#f06aad" stroke-width="4"/>
-  <text x="90" y="78" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="52" font-weight="900" fill="#f06aad">GTA</text>
-  <text x="90" y="148" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="64" font-weight="900" fill="#ffffff">6</text>
+  <rect width="180" height="180" rx="40" fill="#f06aad"/>
+  <text x="90" y="82" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="48" font-weight="900" fill="#ffffff">GTA</text>
+  <text x="90" y="148" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="72" font-weight="900" fill="#ffffff">6</text>
 </svg>`;
 
 const png32 = await sharp(Buffer.from(tabSvg)).png().toBuffer();

@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SiteLayout } from "@/components/layout/site-layout";
 import { AnalyticsScripts } from "@/components/analytics/analytics-scripts";
 import { FAVICON_PATHS } from "@/lib/constants/favicon";
-import { absoluteUrl } from "@/lib/constants/site";
 import { rootMetadata } from "@/lib/metadata";
 import "./globals.css";
 
@@ -45,13 +44,13 @@ export default function RootLayout({
       <head>
         {supabaseOrigin ? <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" /> : null}
         <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
-        <link rel="icon" href={absoluteUrl(FAVICON_PATHS.ico)} sizes="any" />
-        <link rel="icon" type="image/svg+xml" href={absoluteUrl(FAVICON_PATHS.svg)} />
-        <link rel="icon" type="image/png" sizes="48x48" href={absoluteUrl(FAVICON_PATHS.png48)} />
-        <link rel="icon" type="image/png" sizes="32x32" href={absoluteUrl(FAVICON_PATHS.png32)} />
-        <link rel="apple-touch-icon" href={absoluteUrl(FAVICON_PATHS.apple)} />
-        <link rel="apple-touch-icon-precomposed" href={absoluteUrl(FAVICON_PATHS.applePrecomposed)} />
-        <link rel="mask-icon" href={absoluteUrl(FAVICON_PATHS.maskIcon)} color="#f06aad" />
+        <link rel="icon" href={FAVICON_PATHS.ico} sizes="any" />
+        <link rel="icon" type="image/svg+xml" href={FAVICON_PATHS.svg} />
+        <link rel="icon" type="image/png" sizes="48x48" href={FAVICON_PATHS.png48} />
+        <link rel="icon" type="image/png" sizes="32x32" href={FAVICON_PATHS.png32} />
+        <link rel="apple-touch-icon" href={FAVICON_PATHS.apple} />
+        <link rel="apple-touch-icon-precomposed" href={FAVICON_PATHS.applePrecomposed} />
+        <link rel="mask-icon" href={FAVICON_PATHS.maskIcon} color="#f06aad" />
       </head>
       <body className="flex min-h-full min-h-screen-safe flex-col">
         <AnalyticsScripts />

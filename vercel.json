@@ -85,9 +85,15 @@
   ],
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/",
       "has": [{ "type": "host", "value": "gtavihub.gg" }],
-      "destination": "https://www.gtavihub.gg/:path*",
+      "destination": "https://www.gtavihub.gg/",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!favicon\\.ico$|favicon\\.svg$|icon-32\\.png$|icon-48\\.png$|icon-192\\.png$|apple-touch-icon\\.png$|apple-touch-icon-precomposed\\.png$|safari-pinned-tab\\.svg$).+)",
+      "has": [{ "type": "host", "value": "gtavihub.gg" }],
+      "destination": "https://www.gtavihub.gg/:path",
       "permanent": true
     },
     {
