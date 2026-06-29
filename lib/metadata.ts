@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { SITE_NAME, SITE_DESCRIPTION, DEFAULT_OG_IMAGE, absoluteUrl, getSiteUrl } from "@/lib/constants/site";
-import { faviconHref } from "@/lib/constants/favicon";
 
 export function createPageMetadata(options: {
   title: string;
@@ -41,21 +40,6 @@ export const rootMetadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  icons: {
-    icon: [
-      { url: faviconHref("/icon-32.png"), type: "image/png", sizes: "32x32" },
-      { url: faviconHref("/icon-192.png"), type: "image/png", sizes: "192x192" },
-      { url: faviconHref("/favicon.ico"), sizes: "any" },
-    ],
-    apple: [
-      {
-        url: faviconHref("/apple-touch-icon.png"),
-        type: "image/png",
-        sizes: "180x180",
-      },
-    ],
-    shortcut: faviconHref("/favicon.ico"),
-  },
   openGraph: {
     title: `${SITE_NAME} — GTA VI Community Hub`,
     description: SITE_DESCRIPTION,

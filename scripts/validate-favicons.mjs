@@ -10,9 +10,13 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const REQUIRED = [
   { path: "public/favicon.ico", minBytes: 500 },
+  { path: "public/favicon.svg", minBytes: 100 },
+  { path: "public/safari-pinned-tab.svg", minBytes: 80 },
   { path: "public/icon-32.png", minBytes: 200 },
+  { path: "public/icon-48.png", minBytes: 300 },
   { path: "public/icon-192.png", minBytes: 500 },
   { path: "public/apple-touch-icon.png", minBytes: 1000 },
+  { path: "public/apple-touch-icon-precomposed.png", minBytes: 1000 },
 ];
 
 let failed = false;

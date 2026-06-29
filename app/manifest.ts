@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { faviconHref } from "@/lib/constants/favicon";
+import { FAVICON_PATHS } from "@/lib/constants/favicon";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/constants/site";
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -10,27 +10,27 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",
-    theme_color: "#000000",
+    theme_color: "#f06aad",
     icons: [
       {
-        src: faviconHref("/icon-192.png"),
+        src: FAVICON_PATHS.png192,
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: faviconHref("/icon-32.png"),
-        sizes: "32x32",
+        src: FAVICON_PATHS.png48,
+        sizes: "48x48",
         type: "image/png",
       },
       {
-        src: faviconHref("/apple-touch-icon.png"),
+        src: FAVICON_PATHS.apple,
         sizes: "180x180",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: faviconHref("/apple-touch-icon.png"),
+        src: FAVICON_PATHS.apple,
         sizes: "180x180",
         type: "image/png",
         purpose: "maskable",
