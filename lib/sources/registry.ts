@@ -2,6 +2,8 @@ import {
   RockstarNewswireConnector,
   RockstarYoutubeConnector,
   RedditConnector,
+  GoogleNewsConnector,
+  CommunityYoutubeConnector,
   TwitterConnector,
   productionConnectors,
 } from "@/lib/sources/connectors";
@@ -12,6 +14,8 @@ const CONNECTORS: Record<SourcePlatform, SourceConnector> = {
   rockstar_newswire: new RockstarNewswireConnector(),
   rockstar_youtube: new RockstarYoutubeConnector(),
   reddit: new RedditConnector(),
+  google_news: new GoogleNewsConnector(),
+  community_youtube: new CommunityYoutubeConnector(),
   x: new TwitterConnector(),
 };
 

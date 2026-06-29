@@ -2,6 +2,8 @@ export type SourcePlatform =
   | "rockstar_newswire"
   | "rockstar_youtube"
   | "reddit"
+  | "google_news"
+  | "community_youtube"
   | "x";
 
 export type SourceLabel = "official" | "community" | "rumor" | "unconfirmed";
@@ -37,6 +39,8 @@ export const SOURCE_PLATFORM_LABELS: Record<SourcePlatform, string> = {
   rockstar_newswire: "Rockstar Newswire",
   rockstar_youtube: "Rockstar YouTube",
   reddit: "Reddit",
+  google_news: "Google News",
+  community_youtube: "Community YouTube",
   x: "X (Twitter)",
 };
 
@@ -54,6 +58,9 @@ export const SOURCE_LABEL_STYLES: Record<
 export function enforceSourceLabel(input: SourceItemInput): SourceLabel {
   if (input.source === "reddit") {
     return input.source_label === "official" ? "unconfirmed" : input.source_label;
+  }
+  if (input.source === "google_news" || input.source === "community_youtube") {
+    return input.source_label === "official" ? "community" : input.source_label;
   }
   return input.source_label;
 }

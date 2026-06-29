@@ -126,6 +126,42 @@ const SEED = {
       seo_description: "Boobie Ike in GTA 6 — character overview and appearances.",
       image_url: "/images/gta6/boobie-ike.jpg",
     },
+    {
+      slug: "cal",
+      title: "Cal",
+      category: "supporting",
+      description:
+        "Cal appears in GTA VI promotional material as part of the Leonida criminal underworld surrounding Lucia and Jason.",
+      seo_title: "Cal — GTA 6 Character",
+      seo_description: "Who is Cal in GTA 6? Supporting character profile and trailer appearances.",
+    },
+    {
+      slug: "drequan-priest",
+      title: "Drequan Priest",
+      category: "supporting",
+      description:
+        "Drequan Priest is a supporting character in GTA VI, connected to street-level crime and Vice City nightlife.",
+      seo_title: "Drequan Priest — GTA 6 Character",
+      seo_description: "Drequan Priest in GTA VI — role, appearances, and what we know.",
+    },
+    {
+      slug: "real-dimez",
+      title: "Real Dimez",
+      category: "supporting",
+      description:
+        "Real Dimez is a supporting character featured in GTA VI marketing, tied to Leonida's music and street culture.",
+      seo_title: "Real Dimez — GTA 6 Character",
+      seo_description: "Real Dimez in GTA 6 — character overview and known details.",
+    },
+    {
+      slug: "brian-hedricks",
+      title: "Brian Hedricks",
+      category: "supporting",
+      description:
+        "Brian Hedricks appears in GTA VI promotional content as a supporting figure in the Leonida storyline.",
+      seo_title: "Brian Hedricks — GTA 6 Character",
+      seo_description: "Brian Hedricks in GTA VI — who he is and trailer appearances.",
+    },
   ],
   game_vehicles: [
     {

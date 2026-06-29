@@ -16,7 +16,9 @@ export function StudioEditorTab({
   const intakeEmpty =
     briefing.intake.rockstarPosts === 0 &&
     briefing.intake.redditDiscussions === 0 &&
-    briefing.intake.youtubeVideos === 0;
+    briefing.intake.youtubeVideos === 0 &&
+    briefing.intake.googleNewsPosts === 0 &&
+    briefing.intake.communityYoutubePosts === 0;
 
   return (
     <div className="space-y-6">

@@ -2,10 +2,10 @@ import type { SourceConnector } from "@/lib/sources/types";
 import type { SourceItemInput } from "@/lib/types/source";
 import { fetchWithTimeout, parseRssItems, stripHtml } from "@/lib/sources/fetch-utils";
 import { CANONICAL_SITE_URL } from "@/lib/constants/site";
-import { isGta6SourceItem } from "@/lib/gta6/content-filter";
+import { isGta6SourceItem, isLegacyGtaContent } from "@/lib/gta6/content-filter";
 
-const SUBREDDIT = "GTA6";
-const DEFAULT_MIN_SCORE = 100;
+const SUBREDDITS = ["GTA6", "GrandTheftAutoVI", "GTA", "rockstar"];
+const DEFAULT_MIN_SCORE = 50;
 
 interface RedditListingChild {
   data: {
@@ -65,10 +65,21 @@ function toSourceItem(post: {
   };
 }
 
-function filterRedditItems(items: SourceItemInput[]): SourceItemInput[] {
-  return items.filter((item) =>
-    isGta6SourceItem({ source: "reddit", title: item.title, content: item.content })
-  );
+function filterRedditItems(
+  items: SourceItemInput[],
+  subreddit: string
+): SourceItemInput[] {
+  const focused = subreddit === "GTA6" || subreddit === "GrandTheftAutoVI";
+
+  return items.filter((item) => {
+    if (isLegacyGtaContent(item.title, item.content)) return false;
+    if (focused) return true;
+    return isGta6SourceItem({
+      source: "reddit",
+      title: item.title,
+      content: item.content,
+    });
+  });
 }
 
 export class RedditConnector implements SourceConnector {
@@ -76,32 +87,64 @@ export class RedditConnector implements SourceConnector {
 
   async fetchItems(): Promise<SourceItemInput[]> {
     const minScore = getMinScore();
+    const results: SourceItemInput[] = [];
 
-    try {
-      const fromJson = await this.fetchFromRedditJson(minScore);
-      if (fromJson.length > 0) return filterRedditItems(fromJson);
-    } catch (err) {
-      console.warn(
-        "[RedditConnector] JSON endpoint unavailable, trying fallbacks:",
-        err instanceof Error ? err.message : err
-      );
+    for (const subreddit of SUBREDDITS) {
+      let subredditItems: SourceItemInput[] = [];
+
+      try {
+        const fromJson = await this.fetchFromRedditJson(subreddit, minScore);
+        if (fromJson.length > 0) {
+          subredditItems = fromJson;
+        }
+      } catch (err) {
+        console.warn(
+          `[RedditConnector] r/${subreddit} JSON failed:`,
+          err instanceof Error ? err.message : err
+        );
+      }
+
+      if (subredditItems.length === 0) {
+        try {
+          const fromPullPush = await this.fetchFromPullPush(subreddit, minScore);
+          if (fromPullPush.length > 0) {
+            subredditItems = fromPullPush;
+          }
+        } catch (err) {
+          console.warn(
+            `[RedditConnector] r/${subreddit} PullPush failed:`,
+            err instanceof Error ? err.message : err
+          );
+        }
+      }
+
+      if (subredditItems.length === 0) {
+        try {
+          subredditItems = await this.fetchFromRss(subreddit, minScore);
+        } catch (err) {
+          console.warn(
+            `[RedditConnector] r/${subreddit} RSS failed:`,
+            err instanceof Error ? err.message : err
+          );
+        }
+      }
+
+      results.push(...filterRedditItems(subredditItems, subreddit));
     }
 
-    try {
-      const fromPullPush = await this.fetchFromPullPush(minScore);
-      if (fromPullPush.length > 0) return filterRedditItems(fromPullPush);
-    } catch (err) {
-      console.warn(
-        "[RedditConnector] PullPush fallback failed:",
-        err instanceof Error ? err.message : err
-      );
-    }
-
-    return filterRedditItems(await this.fetchFromRss(minScore));
+    const seen = new Set<string>();
+    return results.filter((item) => {
+      if (seen.has(item.external_id)) return false;
+      seen.add(item.external_id);
+      return true;
+    });
   }
 
-  private async fetchFromRedditJson(minScore: number): Promise<SourceItemInput[]> {
-    const url = `https://www.reddit.com/r/${SUBREDDIT}/top.json?t=week&limit=25`;
+  private async fetchFromRedditJson(
+    subreddit: string,
+    minScore: number
+  ): Promise<SourceItemInput[]> {
+    const url = `https://www.reddit.com/r/${subreddit}/top.json?t=week&limit=25`;
     const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "application/json",
@@ -131,9 +174,12 @@ export class RedditConnector implements SourceConnector {
       );
   }
 
-  private async fetchFromPullPush(minScore: number): Promise<SourceItemInput[]> {
+  private async fetchFromPullPush(
+    subreddit: string,
+    minScore: number
+  ): Promise<SourceItemInput[]> {
     const thirtyDaysAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
-    const url = `https://api.pullpush.io/reddit/search/submission/?subreddit=${SUBREDDIT}&sort=desc&sort_type=score&after=${thirtyDaysAgo}&size=25`;
+    const url = `https://api.pullpush.io/reddit/search/submission/?subreddit=${subreddit}&sort=desc&sort_type=score&after=${thirtyDaysAgo}&size=25`;
     const response = await fetchWithTimeout(url, undefined, 30_000);
 
     if (!response.ok) {
@@ -152,15 +198,18 @@ export class RedditConnector implements SourceConnector {
           selftext: post.selftext,
           url: post.permalink
             ? `https://www.reddit.com${post.permalink}`
-            : (post.url ?? `https://www.reddit.com/r/${SUBREDDIT}/`),
+            : (post.url ?? `https://www.reddit.com/r/${subreddit}/`),
           score: post.score ?? 0,
           created_utc: post.created_utc,
         })
       );
   }
 
-  private async fetchFromRss(minScore: number): Promise<SourceItemInput[]> {
-    const url = `https://www.reddit.com/r/${SUBREDDIT}/top/.rss?t=week`;
+  private async fetchFromRss(
+    subreddit: string,
+    minScore: number
+  ): Promise<SourceItemInput[]> {
+    const url = `https://www.reddit.com/r/${subreddit}/top/.rss?t=week`;
     const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "application/atom+xml, application/xml, text/xml, */*",
@@ -178,7 +227,7 @@ export class RedditConnector implements SourceConnector {
     // Top-week RSS has no scores — treat as high-signal community content.
     void minScore;
 
-    return items.slice(0, 15).map((item) => {
+    return items.slice(0, 10).map((item) => {
       const idMatch = item.link.match(/comments\/([a-z0-9]+)/i);
       return toSourceItem({
         id: idMatch?.[1] ?? item.guid,

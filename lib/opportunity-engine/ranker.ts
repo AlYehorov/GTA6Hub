@@ -6,20 +6,73 @@ import type { EditorialOpportunity, OpportunityEntity } from "@/lib/opportunity-
 import type { SourceItem } from "@/lib/types/source";
 import type { Video } from "@/lib/types/video";
 
+type OpportunityStatusMap = Map<
+  string,
+  {
+    status: EditorialOpportunity["status"];
+    aiDraftId: string | null;
+    workspaceId: string | null;
+  }
+>;
+
+export function buildGapOpportunity(
+  gap: ContentGap,
+  statusMap: OpportunityStatusMap
+): EditorialOpportunity {
+  const gapClusterKey = `gap-${gap.kind}-${gap.slug}`;
+  const entity: OpportunityEntity = {
+    id: `${gap.kind}-${gap.slug}`,
+    kind: gap.kind,
+    slug: gap.slug,
+    title: gap.title,
+    href: gap.entityHref,
+  };
+
+  const score =
+    55 +
+    (gap.reason === "no_entity_page" ? 20 : 10) +
+    (gap.kind === "characters" || gap.kind === "locations" ? 10 : 0);
+
+  return {
+    id: `opp-${gapClusterKey}`,
+    clusterKey: gapClusterKey,
+    title: `${gap.title} — GTA 6 Guide`,
+    summary: `Content gap · no ${gap.reason === "no_entity_page" ? "entity page" : "supporting article"}`,
+    score,
+    stars: score >= 90 ? 4 : score >= 60 ? 3 : 2,
+    confidence: "Medium",
+    trafficEstimate: gap.kind === "characters" ? "High" : "Medium",
+    seoEstimate: "High",
+    sourceCount: 0,
+    sourceIds: [],
+    videoIds: [],
+    sourceTypes: [],
+    entities: [entity],
+    relatedArticleIds: [],
+    existingArticleId: null,
+    existingArticleTitle: null,
+    existingArticleSlug: null,
+    action: "create",
+    articleType: "guide",
+    targetKeyword: `${gap.title} GTA 6`,
+    internalLinkTargets: [gap.entityHref],
+    estimatedReadingMinutes: 6,
+    estimatedWritingMinutes: 30,
+    scoringBreakdown: [{ signal: "SEO content gap", points: score }],
+    contentType: "entity_page_update",
+    status: statusMap.get(gapClusterKey)?.status ?? "open",
+    aiDraftId: statusMap.get(gapClusterKey)?.aiDraftId ?? null,
+    workspaceId: statusMap.get(gapClusterKey)?.workspaceId ?? null,
+  };
+}
+
 export function rankEditorialOpportunities(input: {
   sources: SourceItem[];
   videos: Video[];
   articles: ArticleSeoInput[];
   gaps: ContentGap[];
   entities: OpportunityEntity[];
-  statusMap: Map<
-    string,
-    {
-      status: EditorialOpportunity["status"];
-      aiDraftId: string | null;
-      workspaceId: string | null;
-    }
-  >;
+  statusMap: OpportunityStatusMap;
   limit?: number;
 }): EditorialOpportunity[] {
   const existingTitles = input.articles.map((a) => a.title);
@@ -59,50 +112,7 @@ export function rankEditorialOpportunities(input: {
     const gapStatus = input.statusMap.get(gapClusterKey)?.status;
     if (gapStatus === "ignored" || gapStatus === "workflow_sent") continue;
 
-    const entity: OpportunityEntity = {
-      id: `${gap.kind}-${gap.slug}`,
-      kind: gap.kind,
-      slug: gap.slug,
-      title: gap.title,
-      href: gap.entityHref,
-    };
-
-    const score =
-      55 +
-      (gap.reason === "no_entity_page" ? 20 : 10) +
-      (gap.kind === "characters" || gap.kind === "locations" ? 10 : 0);
-
-    opportunities.push({
-      id: `opp-${gapClusterKey}`,
-      clusterKey: gapClusterKey,
-      title: `${gap.title} — GTA 6 Guide`,
-      summary: `Content gap · no ${gap.reason === "no_entity_page" ? "entity page" : "supporting article"}`,
-      score,
-      stars: score >= 90 ? 4 : score >= 60 ? 3 : 2,
-      confidence: "Medium",
-      trafficEstimate: gap.kind === "characters" ? "High" : "Medium",
-      seoEstimate: "High",
-      sourceCount: 0,
-      sourceIds: [],
-      videoIds: [],
-      sourceTypes: [],
-      entities: [entity],
-      relatedArticleIds: [],
-      existingArticleId: null,
-      existingArticleTitle: null,
-      existingArticleSlug: null,
-      action: "create",
-      articleType: "guide",
-      targetKeyword: `${gap.title} GTA 6`,
-      internalLinkTargets: [gap.entityHref],
-      estimatedReadingMinutes: 6,
-      estimatedWritingMinutes: 30,
-      scoringBreakdown: [{ signal: "SEO content gap", points: score }],
-      contentType: "entity_page_update",
-      status: input.statusMap.get(gapClusterKey)?.status ?? "open",
-      aiDraftId: input.statusMap.get(gapClusterKey)?.aiDraftId ?? null,
-      workspaceId: input.statusMap.get(gapClusterKey)?.workspaceId ?? null,
-    });
+    opportunities.push(buildGapOpportunity(gap, input.statusMap));
   }
 
   const seen = new Set<string>();

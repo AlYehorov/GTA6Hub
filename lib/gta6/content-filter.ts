@@ -58,8 +58,10 @@ export function isGta6SourceItem(item: {
   if (hasGta6Signal(item.title)) return true;
   if (isLegacyGtaContent(item.title, item.content)) return false;
 
-  // r/GTA6 is GTA VI-focused; allow posts that do not repeat "GTA VI" in every title.
-  if (item.source === "reddit") return true;
+  // r/GTA6 and r/GrandTheftAutoVI are GTA VI-focused; broader subs need explicit GTA 6 signal.
+  if (item.source === "reddit") {
+    return isGta6Content(item.title, item.content);
+  }
 
   return isGta6Content(item.title, item.content);
 }

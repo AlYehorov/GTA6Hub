@@ -33,6 +33,8 @@ const QUEUE_SOURCES: SourcePlatform[] = [
   "rockstar_newswire",
   "rockstar_youtube",
   "reddit",
+  "google_news",
+  "community_youtube",
 ];
 
 function sourceLabelText(source: SourceItem): string {

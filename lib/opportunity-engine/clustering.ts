@@ -46,7 +46,9 @@ function sourceToMember(source: SourceItem): SourceClusterMember {
   const isRumor =
     source.source_label === "rumor" ||
     source.source_label === "unconfirmed" ||
-    source.source === "reddit";
+    source.source === "reddit" ||
+    source.source === "google_news" ||
+    source.source === "community_youtube";
   const daysOld = source.published_at
     ? (Date.now() - new Date(source.published_at).getTime()) / (1000 * 60 * 60 * 24)
     : (Date.now() - new Date(source.created_at).getTime()) / (1000 * 60 * 60 * 24);
@@ -69,7 +71,9 @@ function sourceToMember(source: SourceItem): SourceClusterMember {
         ? Math.min(100, Math.round(source.content.length / 40))
         : 0,
     youtubeViewEstimate:
-      source.source === "rockstar_youtube" ? parseViewCountSafe(corpus) : 0,
+      source.source === "rockstar_youtube" || source.source === "community_youtube"
+        ? parseViewCountSafe(corpus)
+        : 0,
     topicKeys,
   };
 }
@@ -178,13 +182,14 @@ export function clusterSourceTypes(
 
   for (const member of members) {
     if (member.platform === "rockstar_newswire") types.add("Newswire");
-    if (member.platform === "rockstar_youtube" || member.kind === "video") {
+    if (member.platform === "rockstar_youtube" || member.platform === "community_youtube" || member.kind === "video") {
       types.add("YouTube");
     }
     if (member.platform === "rockstar_newswire" || member.platform === "rockstar_youtube") {
       types.add("Rockstar");
     }
     if (member.platform === "reddit") types.add("Reddit");
+    if (member.platform === "google_news") types.add("Community");
     if (member.sourceLabel === "community" && member.platform !== "reddit") {
       types.add("Community");
     }

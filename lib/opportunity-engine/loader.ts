@@ -10,7 +10,7 @@ import type { ArticleSeoInput } from "@/lib/editorial/types";
 import { getContentEngineUsageStats } from "@/lib/content-engine/usage";
 import { getOpportunityStatusMap, getOpportunityDraftLinksFromAiDrafts } from "@/lib/opportunity-engine/queries";
 import { enrichOpportunitiesWithEditorialFocus } from "@/lib/opportunity-engine/editorial-focus";
-import { rankEditorialOpportunities } from "@/lib/opportunity-engine/ranker";
+import { rankEditorialOpportunities, buildGapOpportunity } from "@/lib/opportunity-engine/ranker";
 import { buildEditorialRecommendation } from "@/lib/opportunity-engine/recommendation";
 import { computeTrendingKeywords } from "@/lib/opportunity-engine/trending";
 import type {
@@ -24,7 +24,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { getAllVideosAdmin } from "@/lib/videos/queries";
 
-const ANALYSIS_WINDOW_DAYS = 7;
+const ANALYSIS_WINDOW_DAYS = 14;
 
 function startOfWindowUtc(): string {
   const d = new Date();
@@ -112,6 +112,8 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
         youtubeVideos: 0,
         redditDiscussions: 0,
         newswireUpdates: 0,
+        googleNewsPosts: 0,
+        communityYoutubePosts: 0,
         affectedEntities: 0,
         outdatedArticles: 0,
       },
@@ -173,6 +175,10 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
     (s) => s.source === "rockstar_newswire" || s.source === "rockstar_youtube"
   ).length;
   const redditDiscussions = windowSources.filter((s) => s.source === "reddit").length;
+  const googleNewsPosts = windowSources.filter((s) => s.source === "google_news").length;
+  const communityYoutubePosts = windowSources.filter(
+    (s) => s.source === "community_youtube"
+  ).length;
   const newswireUpdates = windowSources.filter(
     (s) => s.source === "rockstar_newswire"
   ).length;
@@ -199,7 +205,7 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
     gaps,
     entities: linkedEntities,
     statusMap,
-    limit: 12,
+    limit: 20,
   });
 
   const opportunities = enrichOpportunitiesWithEditorialFocus(rankedOpportunities, {
@@ -208,12 +214,23 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
     articles,
   });
 
-  const weeklyGaps: ContentGapItem[] = gaps.slice(0, 8).map((g) => ({
-    title: g.title,
-    kind: g.kind,
-    slug: g.slug,
-    href: g.entityHref,
-  }));
+  const opportunityByCluster = new Map(
+    opportunities.map((opportunity) => [opportunity.clusterKey, opportunity])
+  );
+
+  const weeklyGaps: ContentGapItem[] = gaps.slice(0, 8).map((g) => {
+    const clusterKey = `gap-${g.kind}-${g.slug}`;
+    const opportunity = opportunityByCluster.get(clusterKey);
+    return {
+      title: g.title,
+      kind: g.kind,
+      slug: g.slug,
+      href: g.entityHref,
+      opportunityId: opportunity?.id ?? `opp-${clusterKey}`,
+      status: opportunity?.status ?? "open",
+      aiDraftId: opportunity?.aiDraftId ?? null,
+    };
+  });
 
   const trendingKeywords = computeTrendingKeywords(
     windowSources.length > 0 ? windowSources : allSources.slice(0, 150)
@@ -231,6 +248,8 @@ export async function loadEditorBriefing(): Promise<EditorBriefingData> {
       youtubeVideos,
       redditDiscussions,
       newswireUpdates,
+      googleNewsPosts,
+      communityYoutubePosts,
       affectedEntities: linkedEntities.length,
       outdatedArticles: outdated.length,
     },
@@ -248,7 +267,41 @@ export async function findOpportunityById(
   opportunityId: string
 ): Promise<import("@/lib/opportunity-engine/types").EditorialOpportunity | null> {
   const data = await loadEditorBriefing();
-  return data.opportunities.find((o) => o.id === opportunityId) ?? null;
+  const found = data.opportunities.find((o) => o.id === opportunityId);
+  if (found) return found;
+
+  if (!opportunityId.startsWith("opp-gap-")) return null;
+
+  const clusterKey = opportunityId.slice("opp-".length);
+  const gapItem = data.weeklyGaps.find(
+    (gap) => `gap-${gap.kind}-${gap.slug}` === clusterKey
+  );
+  if (!gapItem) return null;
+
+  if (!isSupabaseAdminConfigured()) return null;
+
+  const [articles, entityRows, statusMap, allSources, videos] = await Promise.all([
+    fetchArticlesForBriefing(),
+    fetchEntityRowsForGaps(),
+    getOpportunityStatusMap(),
+    getAllSourceItemsAdmin({ limit: 200 }),
+    getAllVideosAdmin(),
+  ]);
+
+  const articleText = buildArticleTextCorpus(
+    articles.map((a) => ({ title: a.title, content: a.content, slug: a.slug }))
+  );
+  const gaps = computeContentGaps(articleText, entityRows, 30);
+  const gap = gaps.find((g) => `gap-${g.kind}-${g.slug}` === clusterKey);
+  if (!gap) return null;
+
+  const opportunity = buildGapOpportunity(gap, statusMap);
+  const [enriched] = enrichOpportunitiesWithEditorialFocus([opportunity], {
+    sources: allSources,
+    videos,
+    articles,
+  });
+  return enriched ?? null;
 }
 
 export async function findOpportunityByClusterKey(

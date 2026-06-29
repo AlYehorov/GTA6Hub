@@ -9,6 +9,8 @@ export function EditorIntakeStats({ intake }: EditorIntakeStatsProps) {
     { label: "Rockstar", value: intake.rockstarPosts, suffix: "new posts" },
     { label: "YouTube", value: intake.youtubeVideos, suffix: "videos" },
     { label: "Reddit", value: intake.redditDiscussions, suffix: "discussions" },
+    { label: "Google News", value: intake.googleNewsPosts, suffix: "articles" },
+    { label: "Community YT", value: intake.communityYoutubePosts, suffix: "videos" },
     { label: "Newswire", value: intake.newswireUpdates, suffix: "updates" },
     { label: "Knowledge Graph", value: intake.affectedEntities, suffix: "affected entities" },
     { label: "Articles", value: intake.outdatedArticles, suffix: "outdated" },

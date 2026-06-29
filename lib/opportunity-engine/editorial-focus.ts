@@ -77,6 +77,8 @@ interface RankedSource {
 function sourceTier(source: SourceItem): number {
   if (source.source === "rockstar_newswire") return 1;
   if (source.source === "rockstar_youtube") return 1;
+  if (source.source === "google_news") return 5;
+  if (source.source === "community_youtube") return 6;
   if (source.source_label === "official" && source.source === "x") return 2;
   if (source.source_label === "official") return 4;
   if (source.source === "reddit") return 6;

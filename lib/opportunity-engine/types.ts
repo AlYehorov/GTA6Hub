@@ -52,6 +52,8 @@ export interface BriefingIntake {
   youtubeVideos: number;
   redditDiscussions: number;
   newswireUpdates: number;
+  googleNewsPosts: number;
+  communityYoutubePosts: number;
   affectedEntities: number;
   outdatedArticles: number;
 }
@@ -61,6 +63,9 @@ export interface ContentGapItem {
   kind: string;
   slug: string;
   href: string;
+  opportunityId: string;
+  status: OpportunityStatus;
+  aiDraftId: string | null;
 }
 
 export interface TrendingKeyword {
