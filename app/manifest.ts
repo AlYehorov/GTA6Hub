@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { faviconHref } from "@/lib/constants/favicon";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/constants/site";
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -12,24 +13,24 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#000000",
     icons: [
       {
-        src: "/icon-192.png",
+        src: faviconHref("/icon-192.png"),
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icon-32.png",
+        src: faviconHref("/icon-32.png"),
         sizes: "32x32",
         type: "image/png",
       },
       {
-        src: "/apple-touch-icon.png",
+        src: faviconHref("/apple-touch-icon.png"),
         sizes: "180x180",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/apple-touch-icon.png",
+        src: faviconHref("/apple-touch-icon.png"),
         sizes: "180x180",
         type: "image/png",
         purpose: "maskable",

@@ -18,6 +18,8 @@
     "cleanup:public-copy": "node scripts/cleanup-public-copy.mjs",
     "fetch:gta6-images-2k": "node scripts/fetch-gta6-images-2k.mjs",
     "generate:favicons": "node scripts/generate-favicons.mjs",
+    "validate:favicons": "node scripts/validate-favicons.mjs",
+    "prebuild": "npm run generate:favicons && npm run validate:favicons",
     "seed:entities": "node scripts/seed-entities.mjs",
     "validate:env": "node scripts/validate-env.mjs"
   },

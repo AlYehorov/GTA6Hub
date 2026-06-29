@@ -73,20 +73,17 @@ const applePng = await sharp({
 
 const ico = await pngToIco([png16, png32]);
 
-const appIco = join(root, "app/favicon.ico");
 const publicIco = join(publicDir, "favicon.ico");
 const icon32 = join(publicDir, "icon-32.png");
 const appleTouch = join(publicDir, "apple-touch-icon.png");
 const icon192 = join(publicDir, "icon-192.png");
 
-writeFileSync(appIco, ico);
 writeFileSync(publicIco, ico);
 writeFileSync(icon32, png32);
 writeFileSync(appleTouch, applePng);
 writeFileSync(icon192, png192);
 
-console.log(`Wrote ${appIco} (${ico.length} bytes)`);
-console.log(`Wrote ${publicIco}`);
+console.log(`Wrote ${publicIco} (${ico.length} bytes)`);
 console.log(`Wrote ${icon32}`);
 console.log(`Wrote ${appleTouch}`);
 console.log(`Wrote ${icon192}`);

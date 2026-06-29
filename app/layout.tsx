@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteLayout } from "@/components/layout/site-layout";
 import { AnalyticsScripts } from "@/components/analytics/analytics-scripts";
+import { faviconHref } from "@/lib/constants/favicon";
 import { rootMetadata } from "@/lib/metadata";
 import "./globals.css";
 
@@ -43,6 +44,10 @@ export default function RootLayout({
       <head>
         {supabaseOrigin ? <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" /> : null}
         <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
+        <link rel="icon" type="image/png" sizes="32x32" href={faviconHref("/icon-32.png")} />
+        <link rel="icon" type="image/png" sizes="192x192" href={faviconHref("/icon-192.png")} />
+        <link rel="icon" href={faviconHref("/favicon.ico")} sizes="any" />
+        <link rel="apple-touch-icon" sizes="180x180" href={faviconHref("/apple-touch-icon.png")} />
       </head>
       <body className="flex min-h-full min-h-screen-safe flex-col">
         <AnalyticsScripts />
