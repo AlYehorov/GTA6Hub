@@ -4,7 +4,12 @@ import { ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { DraftReviewActions } from "@/components/admin/draft-review-actions";
 import { getDraftByIdAdmin } from "@/lib/drafts/queries";
-import { confidencePercent, MIN_CONTENT_CONFIDENCE } from "@/lib/editorial/confidence";
+import {
+  confidencePercent,
+  confidenceThresholdPercent,
+  meetsDraftConfidenceThreshold,
+  publishabilityHint,
+} from "@/lib/editorial/confidence";
 import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
 import type { SourcePlatform } from "@/lib/types/source";
 import { cn } from "@/lib/utils";
@@ -19,13 +24,20 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
   if (!draft) notFound();
 
   const pct = confidencePercent(draft.confidence);
+  const minPct = confidenceThresholdPercent(draft.source_item.source_label);
+  const canPublish = meetsDraftConfidenceThreshold(draft);
 
   return (
     <>
       <PageHeader title="Review Draft" description={draft.title} />
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-wrap items-center gap-3">
-          <DraftReviewActions draftId={draft.id} status={draft.status} />
+          <DraftReviewActions
+            draftId={draft.id}
+            status={draft.status}
+            canApprove={canPublish}
+            publishabilityHint={publishabilityHint(draft.source_item.source_label)}
+          />
         </div>
 
         <div className="mb-8 grid gap-4 sm:grid-cols-4">
@@ -39,13 +51,14 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
             <span
               className={cn(
                 "font-mono",
-                pct >= confidencePercent(MIN_CONTENT_CONFIDENCE)
-                  ? "text-emerald-400"
-                  : "text-red-400"
+                canPublish ? "text-emerald-400" : "text-amber-400"
               )}
             >
               {pct}%
             </span>
+            <p className="mt-1 text-xs text-white/40">
+              Min {minPct}% for {draft.source_item.source_label} sources
+            </p>
           </MetaCard>
           <MetaCard label="Status">
             <span className="capitalize">{draft.status}</span>

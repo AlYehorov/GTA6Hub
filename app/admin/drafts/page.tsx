@@ -3,7 +3,11 @@ import { ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAllDraftsAdmin, getDraftStats } from "@/lib/drafts/queries";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
-import { MIN_CONTENT_CONFIDENCE, confidencePercent } from "@/lib/editorial/confidence";
+import {
+  confidencePercent,
+  confidenceThresholdPercent,
+  meetsConfidenceThreshold,
+} from "@/lib/editorial/confidence";
 import { formatDate } from "@/lib/utils/format-date";
 import {
   SOURCE_LABEL_STYLES,
@@ -88,7 +92,10 @@ export default async function AdminDraftsPage() {
                       <SourceLabelBadge label={draft.source_label} />
                     </td>
                     <td className="px-4 py-3">
-                      <ConfidenceBadge value={draft.confidence} />
+                      <ConfidenceBadge
+                        value={draft.confidence}
+                        sourceLabel={draft.source_label}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={draft.status} />
@@ -124,12 +131,17 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function ConfidenceBadge({ value }: { value: number }) {
+function ConfidenceBadge({
+  value,
+  sourceLabel,
+}: {
+  value: number;
+  sourceLabel: SourceLabel;
+}) {
   const pct = confidencePercent(value);
-  const color =
-    pct >= confidencePercent(MIN_CONTENT_CONFIDENCE)
-      ? "text-emerald-400"
-      : "text-red-400";
+  const minPct = confidenceThresholdPercent(sourceLabel);
+  const meets = meetsConfidenceThreshold(value, sourceLabel);
+  const color = meets ? "text-emerald-400" : pct >= minPct - 10 ? "text-amber-400" : "text-red-400";
 
   return <span className={cn("font-mono text-xs", color)}>{pct}%</span>;
 }

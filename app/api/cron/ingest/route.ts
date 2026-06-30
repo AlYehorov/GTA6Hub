@@ -36,8 +36,10 @@ async function handleIngest() {
     ingested: result.ingested,
     skipped: result.skipped,
     draftsCreated: result.draftsCreated,
+    articlesPublished: result.articlesPublished,
     errors: result.errors,
     aiProvider: process.env.OPENAI_API_KEY?.trim() ? "openai" : "mock",
+    autoPublish: process.env.AUTO_PUBLISH_NEWS?.trim().toLowerCase() !== "false",
   });
 }
 

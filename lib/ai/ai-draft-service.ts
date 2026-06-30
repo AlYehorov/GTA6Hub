@@ -34,7 +34,7 @@ export class AIDraftService {
     if (!isSupabaseAdminConfigured()) return null;
 
     const generated = await this.generateFromSource(source);
-    if (!meetsConfidenceThreshold(generated.confidence)) {
+    if (!meetsConfidenceThreshold(generated.confidence, source.source_label)) {
       return null;
     }
 

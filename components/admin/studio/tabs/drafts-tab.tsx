@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { MIN_CONTENT_CONFIDENCE, confidencePercent } from "@/lib/editorial/confidence";
+import { confidencePercent } from "@/lib/editorial/confidence";
 import { formatDate } from "@/lib/utils/format-date";
 import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
 import type { SourcePlatform } from "@/lib/types/source";
@@ -26,8 +26,8 @@ export function StudioDraftsTab({
       <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
         <h2 className="font-heading text-xl font-semibold text-white">Review → Approve → Publish</h2>
         <p className="mt-1 text-sm text-white/45">
-          Approve только при confidence ≥ {confidencePercent(MIN_CONTENT_CONFIDENCE)}%.
-          После publish статья уходит на сайт.
+          Official sources: approve при confidence ≥ 90%. Community/media (Reddit, Google News): от 50% —
+          на сайте будет пометка unverified.
         </p>
       </section>
 

@@ -224,18 +224,28 @@ function buildHeadlineCandidates(input: {
   seoKeyword: string;
   clusterKey: string;
   articleType: FocusArticleType;
+  hasOfficial: boolean;
 }): string[] {
   const keyword = input.seoKeyword.trim();
   const shortKeyword = keyword.replace(/^GTA 6\s*/i, "").trim() || keyword;
 
-  const candidates = [
+  const communityCandidates = [
+    `GTA 6 ${shortKeyword}: What We Know So Far`,
+    `GTA VI ${shortKeyword} — Community Discussion Roundup`,
+    input.primaryStory.replace(/\.$/, ""),
+    `GTA 6 ${shortKeyword} Explained`,
+  ];
+
+  const officialCandidates = [
     `${capitalizePhrase(shortKeyword)} — What Rockstar Confirmed`,
     `GTA VI ${shortKeyword}: Confirmed Details`,
     input.primaryStory.replace(/\.$/, ""),
     `GTA 6 ${shortKeyword} Explained`,
   ];
 
-  if (input.clusterKey === "pricing") {
+  const candidates = input.hasOfficial ? officialCandidates : communityCandidates;
+
+  if (input.clusterKey === "pricing" && input.hasOfficial) {
     candidates.unshift("GTA VI Preorders and Edition Pricing Confirmed");
     candidates.push("GTA 6 Price: Standard and Ultimate Editions");
   }
@@ -247,7 +257,7 @@ function buildHeadlineCandidates(input: {
   return uniqueLines(candidates.filter(Boolean)).slice(0, 5);
 }
 
-function scoreHeadline(headline: string, seoKeyword: string): number {
+function scoreHeadline(headline: string, seoKeyword: string, hasOfficial: boolean): number {
   let score = 0;
   const lower = headline.toLowerCase();
   const keywordParts = seoKeyword.toLowerCase().split(/\s+/).filter((part) => part.length > 3);
@@ -257,7 +267,8 @@ function scoreHeadline(headline: string, seoKeyword: string): number {
   }
 
   if (lower.includes("gta")) score += 18;
-  if (lower.includes("rockstar") || lower.includes("confirmed")) score += 10;
+  if (hasOfficial && (lower.includes("rockstar") || lower.includes("confirmed"))) score += 10;
+  if (!hasOfficial && /confirmed|rockstar confirmed/i.test(lower)) score -= 50;
   if (headline.length >= 42 && headline.length <= 72) score += 12;
   if (/everything we know|officially announced\.\.\.|overview/i.test(lower)) score -= 40;
   if (/\$\d+/.test(headline)) score += 8;
@@ -265,9 +276,13 @@ function scoreHeadline(headline: string, seoKeyword: string): number {
   return score;
 }
 
-function pickBestHeadline(candidates: string[], seoKeyword: string): string {
+function pickBestHeadline(
+  candidates: string[],
+  seoKeyword: string,
+  hasOfficial: boolean
+): string {
   const ranked = [...candidates].sort(
-    (a, b) => scoreHeadline(b, seoKeyword) - scoreHeadline(a, seoKeyword)
+    (a, b) => scoreHeadline(b, seoKeyword, hasOfficial) - scoreHeadline(a, seoKeyword, hasOfficial)
   );
   return ranked[0] ?? seoKeyword;
 }
@@ -404,9 +419,12 @@ export function buildEditorialFocus(input: EditorialFocusBuildInput): EditorialF
         seoKeyword,
         clusterKey: opportunity.clusterKey,
         articleType,
+        hasOfficial,
       })
     : [];
-  const headline = primaryStory ? pickBestHeadline(headlineCandidates, seoKeyword) : opportunity.title;
+  const headline = primaryStory
+    ? pickBestHeadline(headlineCandidates, seoKeyword, hasOfficial)
+    : opportunity.title;
 
   const relatedEntities: EditorialFocusEntity[] = opportunity.entities.map((entity) => ({
     kind: entity.kind,

@@ -12,11 +12,15 @@ import type { AiDraftStatus } from "@/lib/types/ai-draft";
 interface DraftReviewActionsProps {
   draftId: string;
   status: AiDraftStatus;
+  canApprove?: boolean;
+  publishabilityHint?: string;
 }
 
 export function DraftReviewActions({
   draftId,
   status,
+  canApprove = true,
+  publishabilityHint,
 }: DraftReviewActionsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -101,11 +105,16 @@ export function DraftReviewActions({
   }
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-col gap-2">
+      {publishabilityHint && (
+        <p className="text-xs text-white/45">{publishabilityHint}</p>
+      )}
+      <div className="flex flex-wrap gap-3">
       {status === "pending" && (
         <>
           <Button
-            disabled={isPending}
+            disabled={isPending || !canApprove}
+            title={!canApprove ? publishabilityHint : undefined}
             onClick={() => run(() => approveDraft(draftId))}
             className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500"
           >
@@ -172,6 +181,7 @@ export function DraftReviewActions({
           </Button>
         </>
       )}
+      </div>
     </div>
   );
 }

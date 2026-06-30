@@ -13,7 +13,10 @@ import {
   trackDraftRejected,
   trackDraftPublished,
 } from "@/lib/analytics/track";
-import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
+import {
+  meetsDraftConfidenceThreshold,
+  confidenceThresholdPercent,
+} from "@/lib/editorial/confidence";
 import type { ArticleType } from "@/lib/types/article";
 
 export interface ActionResult {
@@ -53,8 +56,12 @@ export async function approveDraft(id: string): Promise<ActionResult> {
   if (draft.status !== "pending") {
     return { success: false, error: "Only pending drafts can be approved" };
   }
-  if (!meetsConfidenceThreshold(draft.confidence)) {
-    return { success: false, error: "Draft confidence is below the 90% minimum" };
+  if (!meetsDraftConfidenceThreshold(draft)) {
+    const min = confidenceThresholdPercent(draft.source_item.source_label);
+    return {
+      success: false,
+      error: `Draft confidence is below the ${min}% minimum for ${draft.source_item.source_label} sources`,
+    };
   }
 
   try {
@@ -145,8 +152,12 @@ export async function publishDraft(
   if (draft.status !== "approved") {
     return { success: false, error: "Draft must be approved before publishing" };
   }
-  if (!meetsConfidenceThreshold(draft.confidence)) {
-    return { success: false, error: "Draft confidence is below the 90% minimum" };
+  if (!meetsDraftConfidenceThreshold(draft)) {
+    const min = confidenceThresholdPercent(draft.source_item.source_label);
+    return {
+      success: false,
+      error: `Draft confidence is below the ${min}% minimum for ${draft.source_item.source_label} sources`,
+    };
   }
 
   try {

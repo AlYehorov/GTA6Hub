@@ -1,5 +1,6 @@
 import { sourceIngestionService } from "@/lib/sources/source-ingestion-service";
 import { aiDraftService } from "@/lib/ai/ai-draft-service";
+import { autoPublishService } from "@/lib/workflows/auto-publish-service";
 import { upsertVideoFromYoutubeSource } from "@/lib/videos/queries";
 import { isGta6SourceItem } from "@/lib/gta6/content-filter";
 import type { SourceItem, SourcePlatform } from "@/lib/types/source";
@@ -9,20 +10,22 @@ export interface WorkflowResult {
   ingested: number;
   skipped: number;
   draftsCreated: number;
+  articlesPublished: number;
   errors: string[];
 }
 
 /**
- * End-to-end workflow: ingest sources → generate AI drafts.
- * Never publishes — human review is mandatory.
+ * End-to-end workflow: ingest sources → generate AI drafts → auto-publish eligible news.
  */
 export class IngestAndDraftWorkflow {
   /** Production cron cycle: real connectors + all unprocessed items. */
   async runFullCycle(): Promise<WorkflowResult> {
+    autoPublishService.resetRunCounter();
     const result: WorkflowResult = {
       ingested: 0,
       skipped: 0,
       draftsCreated: 0,
+      articlesPublished: 0,
       errors: [],
     };
 
@@ -66,6 +69,7 @@ export class IngestAndDraftWorkflow {
       ingested: 0,
       skipped: 0,
       draftsCreated: 0,
+      articlesPublished: 0,
       errors: [],
     };
 
@@ -91,6 +95,7 @@ export class IngestAndDraftWorkflow {
       ingested: 0,
       skipped: 0,
       draftsCreated: 0,
+      articlesPublished: 0,
       errors: [],
     };
 
@@ -126,8 +131,15 @@ export class IngestAndDraftWorkflow {
     await this.prepareSourceSideEffects(source);
     const draft = await aiDraftService.createDraft(source);
     await sourceIngestionService.markProcessed(source.id);
-    if (draft) result.draftsCreated++;
-    else result.skipped++;
+    if (draft) {
+      result.draftsCreated++;
+      const auto = await autoPublishService.tryAutoPublish(draft.id);
+      if (auto.published) {
+        result.articlesPublished++;
+      }
+    } else {
+      result.skipped++;
+    }
   }
 
   private async prepareSourceSideEffects(source: SourceItem): Promise<void> {

@@ -105,6 +105,9 @@ export function OpportunityCard({ opportunity }: { opportunity: EditorialOpportu
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <StarRating stars={opportunity.stars} />
+          <p className="mt-1 text-xs text-white/35">
+            Stars = editorial priority (SEO/traffic), not AI publish confidence
+          </p>
           <h3 className="mt-2 font-heading text-lg font-semibold text-white">
             {opportunity.title}
           </h3>

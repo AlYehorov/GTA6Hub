@@ -35,7 +35,8 @@ export function StudioGuideTab() {
       <section className="space-y-4">
         <h3 className="font-medium text-white">3. Drafts — review и publish</h3>
         <ul className="list-inside list-disc space-y-1 text-sm text-white/55">
-          <li>Approve только при confidence ≥ 90%</li>
+          <li>Cron может auto-publish: confidence ок + нет дубликата → сразу на /news</li>
+          <li>Official: approve при confidence ≥ 90%; community/media: от 50% (unverified на сайте)</li>
           <li>Publish as News или Publish as Guide</li>
           <li>После publish тема исчезает из Editor</li>
           <li>Живую статью правь в Articles</li>

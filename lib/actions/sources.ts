@@ -13,6 +13,7 @@ export interface ActionResult {
     ingested: number;
     skipped: number;
     draftsCreated: number;
+    articlesPublished: number;
     errors: string[];
   };
 }

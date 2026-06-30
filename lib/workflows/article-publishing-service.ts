@@ -3,7 +3,7 @@ import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { calculateReadingTime, slugify } from "@/lib/utils/article";
 import { getVideoBySourceItemId } from "@/lib/videos/queries";
 import { sanitizeArticleContent, sanitizeArticleExcerpt } from "@/lib/editorial/sanitize";
-import { meetsConfidenceThreshold } from "@/lib/editorial/confidence";
+import { meetsDraftConfidenceThreshold, confidenceThresholdPercent } from "@/lib/editorial/confidence";
 import { resolveHeroImageForArticle, isHighResolutionHero } from "@/lib/articles/resolve-hero-image";
 import type { AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { ArticleType } from "@/lib/types/article";
@@ -15,25 +15,38 @@ export interface PublishResult {
   type: ArticleType;
 }
 
+export interface PublishDraftOptions {
+  /** Cron auto-publish skips the manual approval step. */
+  autoPublished?: boolean;
+}
+
 /**
  * Publishes an approved AI draft as a live article.
- * Only invoked by explicit human action — never called automatically.
+ * Manual admin actions require approved status; cron auto-publish may skip that step.
  */
 export class ArticlePublishingService {
   async publishDraft(
     draft: AiDraftWithSource,
-    type: ArticleType = "news"
+    type: ArticleType = "news",
+    options?: PublishDraftOptions
   ): Promise<PublishResult> {
     if (!isSupabaseAdminConfigured()) {
       throw new Error("Supabase admin is not configured");
     }
 
-    if (draft.status !== "approved") {
+    if (!options?.autoPublished && draft.status !== "approved") {
       throw new Error("Only approved drafts can be published");
     }
 
-    if (!meetsConfidenceThreshold(draft.confidence)) {
-      throw new Error("Draft confidence is below the 90% minimum required for publishing");
+    if (draft.status === "published") {
+      throw new Error("Draft is already published");
+    }
+
+    if (!meetsDraftConfidenceThreshold(draft)) {
+      const min = confidenceThresholdPercent(draft.source_item.source_label);
+      throw new Error(
+        `Draft confidence is below the ${min}% minimum required for ${draft.source_item.source_label} sources`
+      );
     }
 
     const supabase = createAdminClient();
