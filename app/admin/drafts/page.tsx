@@ -95,6 +95,7 @@ export default async function AdminDraftsPage() {
                       <ConfidenceBadge
                         value={draft.confidence}
                         sourceLabel={draft.source_label}
+                        source={draft.source}
                       />
                     </td>
                     <td className="px-4 py-3">
@@ -134,13 +135,15 @@ function StatCard({ label, value }: { label: string; value: number }) {
 function ConfidenceBadge({
   value,
   sourceLabel,
+  source,
 }: {
   value: number;
   sourceLabel: SourceLabel;
+  source: SourcePlatform;
 }) {
   const pct = confidencePercent(value);
-  const minPct = confidenceThresholdPercent(sourceLabel);
-  const meets = meetsConfidenceThreshold(value, sourceLabel);
+  const minPct = confidenceThresholdPercent(sourceLabel, source);
+  const meets = meetsConfidenceThreshold(value, sourceLabel, source);
   const color = meets ? "text-emerald-400" : pct >= minPct - 10 ? "text-amber-400" : "text-red-400";
 
   return <span className={cn("font-mono text-xs", color)}>{pct}%</span>;

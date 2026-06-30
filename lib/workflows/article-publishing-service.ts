@@ -7,7 +7,7 @@ import { meetsDraftConfidenceThreshold, confidenceThresholdPercent } from "@/lib
 import { resolveHeroImageForArticle, isHighResolutionHero } from "@/lib/articles/resolve-hero-image";
 import type { AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { ArticleType } from "@/lib/types/article";
-import type { SourceLabel } from "@/lib/types/source";
+import { SOURCE_PLATFORM_LABELS, type SourceLabel } from "@/lib/types/source";
 
 export interface PublishResult {
   articleId: string;
@@ -43,9 +43,12 @@ export class ArticlePublishingService {
     }
 
     if (!meetsDraftConfidenceThreshold(draft)) {
-      const min = confidenceThresholdPercent(draft.source_item.source_label);
+      const min = confidenceThresholdPercent(
+        draft.source_item.source_label,
+        draft.source_item.source
+      );
       throw new Error(
-        `Draft confidence is below the ${min}% minimum required for ${draft.source_item.source_label} sources`
+        `Draft confidence is below the ${min}% minimum required for ${SOURCE_PLATFORM_LABELS[draft.source_item.source]} sources`
       );
     }
 

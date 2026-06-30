@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdminUser } from "@/lib/auth/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { confidenceThresholdPercent } from "@/lib/editorial/confidence";
+import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
 import { aiDraftService } from "@/lib/ai/ai-draft-service";
 import { getSourceItemByIdAdmin } from "@/lib/sources/queries";
 import { sourceIngestionService } from "@/lib/sources/source-ingestion-service";
@@ -70,10 +71,10 @@ export async function generateDraftFromSource(
     await sourceIngestionService.markProcessed(source.id);
     revalidateEditorialPaths();
     if (!draft) {
-      const min = confidenceThresholdPercent(source.source_label);
+      const min = confidenceThresholdPercent(source.source_label, source.source);
       return {
         success: false,
-        error: `Draft confidence below ${min}% threshold for ${source.source_label} sources — not saved`,
+        error: `Draft confidence below ${min}% threshold for ${SOURCE_PLATFORM_LABELS[source.source]} — not saved`,
       };
     }
     return {

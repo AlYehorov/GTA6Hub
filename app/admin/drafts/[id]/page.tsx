@@ -24,7 +24,10 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
   if (!draft) notFound();
 
   const pct = confidencePercent(draft.confidence);
-  const minPct = confidenceThresholdPercent(draft.source_item.source_label);
+  const minPct = confidenceThresholdPercent(
+    draft.source_item.source_label,
+    draft.source_item.source
+  );
   const canPublish = meetsDraftConfidenceThreshold(draft);
 
   return (
@@ -36,7 +39,10 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
             draftId={draft.id}
             status={draft.status}
             canApprove={canPublish}
-            publishabilityHint={publishabilityHint(draft.source_item.source_label)}
+            publishabilityHint={publishabilityHint(
+              draft.source_item.source_label,
+              draft.source_item.source
+            )}
           />
         </div>
 
@@ -57,7 +63,7 @@ export default async function AdminDraftDetailPage({ params }: PageProps) {
               {pct}%
             </span>
             <p className="mt-1 text-xs text-white/40">
-              Min {minPct}% for {draft.source_item.source_label} sources
+              Min {minPct}% for {SOURCE_PLATFORM_LABELS[draft.source_item.source as SourcePlatform]}
             </p>
           </MetaCard>
           <MetaCard label="Status">

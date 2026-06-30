@@ -17,6 +17,7 @@ import {
   meetsDraftConfidenceThreshold,
   confidenceThresholdPercent,
 } from "@/lib/editorial/confidence";
+import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
 import type { ArticleType } from "@/lib/types/article";
 
 export interface ActionResult {
@@ -57,10 +58,13 @@ export async function approveDraft(id: string): Promise<ActionResult> {
     return { success: false, error: "Only pending drafts can be approved" };
   }
   if (!meetsDraftConfidenceThreshold(draft)) {
-    const min = confidenceThresholdPercent(draft.source_item.source_label);
+    const min = confidenceThresholdPercent(
+      draft.source_item.source_label,
+      draft.source_item.source
+    );
     return {
       success: false,
-      error: `Draft confidence is below the ${min}% minimum for ${draft.source_item.source_label} sources`,
+      error: `Draft confidence is below the ${min}% minimum for ${SOURCE_PLATFORM_LABELS[draft.source_item.source]} sources`,
     };
   }
 
@@ -153,10 +157,13 @@ export async function publishDraft(
     return { success: false, error: "Draft must be approved before publishing" };
   }
   if (!meetsDraftConfidenceThreshold(draft)) {
-    const min = confidenceThresholdPercent(draft.source_item.source_label);
+    const min = confidenceThresholdPercent(
+      draft.source_item.source_label,
+      draft.source_item.source
+    );
     return {
       success: false,
-      error: `Draft confidence is below the ${min}% minimum for ${draft.source_item.source_label} sources`,
+      error: `Draft confidence is below the ${min}% minimum for ${SOURCE_PLATFORM_LABELS[draft.source_item.source]} sources`,
     };
   }
 
