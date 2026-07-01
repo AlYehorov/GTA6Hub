@@ -1,7 +1,6 @@
 export const MAIN_NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "Newsroom", href: "/newsroom" },
-  { label: "News", href: "/news" },
+  { label: "News", href: "/newsroom" },
   { label: "Videos", href: "/videos" },
   { label: "Guides", href: "/guides" },
   { label: "Characters", href: "/characters" },
@@ -16,7 +15,7 @@ export const FEATURED_ITEMS = [
   {
     title: "News",
     description: "Trailers, leaks, and official announcements from Leonida.",
-    href: "/news",
+    href: "/newsroom",
     accent: "from-pink-500/20 to-rose-600/5",
   },
   {

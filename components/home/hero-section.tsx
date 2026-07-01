@@ -32,7 +32,7 @@ export function HeroSection() {
 
         <div className="animate-fade-up mt-8 flex flex-wrap gap-3 [animation-delay:240ms]">
           <Link
-            href="/news"
+            href="/newsroom"
             className={cn(
               buttonVariants({ size: "lg" }),
               "h-11 gap-2 bg-white px-7 text-sm text-black hover:bg-white/90"

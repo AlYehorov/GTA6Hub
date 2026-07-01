@@ -76,7 +76,7 @@ function trackerLinks(kind: GameEntityKind): RelatedLink[] {
 const STATIC_LINKS: RelatedLink[] = [
   { title: "Interactive Map", href: "/map", type: "Map" },
   { title: "Leaderboard", href: "/leaderboard", type: "Community" },
-  { title: "Latest News", href: "/news", type: "News" },
+  { title: "Latest News", href: "/newsroom", type: "News" },
   { title: "Guides", href: "/guides", type: "Guide" },
 ];
 

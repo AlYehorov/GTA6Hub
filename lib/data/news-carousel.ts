@@ -26,7 +26,7 @@ export function newsToCarouselItems(articles: NewsArticle[]): CarouselItem[] {
     id: article.id,
     title: article.title,
     subtitle: article.excerpt,
-    href: "/news",
+    href: "/newsroom",
     tag: article.category,
     image: NEWS_IMAGES[index % NEWS_IMAGES.length],
     variant: index === 0 ? "hero" : NEWS_VARIANTS[index - 1],

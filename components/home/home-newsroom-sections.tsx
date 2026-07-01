@@ -22,7 +22,7 @@ export async function HomeNewsroomSections() {
           <SectionHeader title="Latest News" href="/newsroom" />
           {featured && <FeaturedNewsCard item={featured} />}
           {rest.length > 0 && (
-            <ContentCarousel title="Latest News" seeAllHref="/news" items={rest} hideHeader className="-mx-4 sm:-mx-6 lg:-mx-8" />
+            <ContentCarousel title="Latest News" seeAllHref="/newsroom" items={rest} hideHeader className="-mx-4 sm:-mx-6 lg:-mx-8" />
           )}
         </div>
       </section>
@@ -39,7 +39,7 @@ export async function HomeNewsroomSections() {
         {restLatest.length > 0 && (
           <ContentCarousel
             title="Latest News"
-            seeAllHref="/news"
+            seeAllHref="/newsroom"
             items={restLatest}
             hideHeader
             className="-mx-4 sm:-mx-6 lg:-mx-8"
