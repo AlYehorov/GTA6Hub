@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ingestAndDraftWorkflow } from "@/lib/workflows/ingest-and-draft-workflow";
+import { revalidatePublishedArticlePaths } from "@/lib/cache/revalidate-articles";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,10 @@ async function handleIngest() {
 
   const startedAt = Date.now();
   const result = await ingestAndDraftWorkflow.runFullCycle();
+
+  if (result.articlesPublished > 0) {
+    revalidatePublishedArticlePaths();
+  }
 
   return NextResponse.json({
     ok: true,

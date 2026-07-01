@@ -26,7 +26,7 @@ export default async function NewsroomPage() {
         getPublishedArticles("news", 12),
         getPublishedArticlesByCategory("news", "official", 8),
         getPublishedArticlesByCategory("news", "trailer", 8),
-        getPublishedArticlesBySourceLabel("news", "unconfirmed", 8),
+        getPublishedArticlesBySourceLabel("news", ["unconfirmed", "community", "rumor"], 8),
         getEditorialPicks(6),
         getPublishedArticles("guide", 6),
       ])

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { isGta6Content } from "@/lib/gta6/content-filter";
 import { meetsArticleConfidenceThreshold } from "@/lib/editorial/confidence";
+import type { ArticleListItem } from "@/lib/types/article";
 import { entityHref } from "@/lib/entities/config";
 import { searchEntities } from "@/lib/entities/queries";
 import type { GameEntityKind } from "@/lib/types/game-entity";
@@ -66,7 +67,7 @@ async function searchArticles(query: string): Promise<SearchResult[]> {
 
   const { data, error } = await supabase
     .from("articles")
-    .select("id, title, slug, excerpt, type, ai_confidence")
+    .select("id, title, slug, excerpt, type, ai_confidence, source_label")
     .eq("status", "published")
     .or(`title.ilike.${pattern},excerpt.ilike.${pattern},content.ilike.${pattern}`)
     .order("published_at", { ascending: false })
@@ -77,7 +78,10 @@ async function searchArticles(query: string): Promise<SearchResult[]> {
   return (data ?? [])
     .filter((row) =>
       isGta6Content(row.title as string, row.excerpt as string) &&
-      meetsArticleConfidenceThreshold(row.ai_confidence as number | null)
+      meetsArticleConfidenceThreshold(
+        row.ai_confidence as number | null,
+        row.source_label as ArticleListItem["source_label"]
+      )
     )
     .map((row) => ({
     id: row.id as string,

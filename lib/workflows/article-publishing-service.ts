@@ -5,6 +5,7 @@ import { getVideoBySourceItemId } from "@/lib/videos/queries";
 import { sanitizeArticleContent, sanitizeArticleExcerpt } from "@/lib/editorial/sanitize";
 import { meetsDraftConfidenceThreshold, confidenceThresholdPercent } from "@/lib/editorial/confidence";
 import { resolveHeroImageForArticle, isHighResolutionHero } from "@/lib/articles/resolve-hero-image";
+import { revalidatePublishedArticlePaths } from "@/lib/cache/revalidate-articles";
 import type { AiDraftWithSource } from "@/lib/types/ai-draft";
 import type { ArticleType } from "@/lib/types/article";
 import { SOURCE_PLATFORM_LABELS, type SourceLabel } from "@/lib/types/source";
@@ -112,6 +113,8 @@ export class ArticlePublishingService {
       .from("ai_drafts")
       .update({ status: "published", published_article_id: article.id })
       .eq("id", draft.id);
+
+    revalidatePublishedArticlePaths(article.slug, article.type as ArticleType);
 
     return {
       articleId: article.id,

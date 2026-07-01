@@ -48,7 +48,7 @@ function filterArticles(items: ArticleListItem[]): ArticleListItem[] {
   return items.filter(
     (item) =>
       isGta6Content(item.title, item.excerpt) &&
-      meetsArticleConfidenceThreshold(item.ai_confidence)
+      meetsArticleConfidenceThreshold(item.ai_confidence, item.source_label)
   );
 }
 
@@ -79,7 +79,9 @@ const getCachedHomeArticles = unstable_cache(
       latest: news.slice(0, 5),
       official: news.filter((a) => a.category?.slug === "official").slice(0, 4),
       trailers: news.filter((a) => a.category?.slug === "trailer").slice(0, 4),
-      rumors: news.filter((a) => a.source_label === "unconfirmed").slice(0, 4),
+      rumors: news
+        .filter((a) => a.source_label === "unconfirmed" || a.source_label === "community" || a.source_label === "rumor")
+        .slice(0, 4),
       guides: guides.slice(0, 4),
     };
   },

@@ -13,6 +13,13 @@ import type {
   Article,
 } from "@/lib/types/article";
 
+function isPublicArticle(item: ArticleListItem): boolean {
+  return (
+    isGta6Content(item.title, item.excerpt) &&
+    meetsArticleConfidenceThreshold(item.ai_confidence, item.source_label)
+  );
+}
+
 const ARTICLE_LIST_SELECT = `
   id, title, slug, excerpt, hero_image_url, status, type, reading_time_minutes,
   published_at, source_label, source_url, ai_confidence,
@@ -40,11 +47,7 @@ function mapListItem(row: Record<string, unknown>): ArticleListItem {
 }
 
 function filterGta6Articles(items: ArticleListItem[]): ArticleListItem[] {
-  return items.filter(
-    (item) =>
-      isGta6Content(item.title, item.excerpt) &&
-      meetsArticleConfidenceThreshold(item.ai_confidence)
-  );
+  return items.filter(isPublicArticle);
 }
 
 export async function getPublishedArticles(
@@ -105,18 +108,19 @@ export async function getPublishedArticlesByCategory(
 
 export async function getPublishedArticlesBySourceLabel(
   type: ArticleType,
-  sourceLabel: string,
+  sourceLabel: string | string[],
   limit = 10
 ): Promise<ArticleListItem[]> {
   if (!isSupabaseConfigured()) return [];
 
   const supabase = await createClient();
+  const labels = Array.isArray(sourceLabel) ? sourceLabel : [sourceLabel];
   const { data, error } = await supabase
     .from("articles")
     .select(ARTICLE_LIST_SELECT)
     .eq("type", type)
     .eq("status", "published")
-    .eq("source_label", sourceLabel)
+    .in("source_label", labels)
     .order("published_at", { ascending: false })
     .limit(limit);
 
@@ -184,7 +188,7 @@ export async function getArticleBySlug(
 
   const article = mapArticle(data as Record<string, unknown>);
   if (!isGta6Content(article.title, article.excerpt, article.content)) return null;
-  if (!meetsArticleConfidenceThreshold(article.ai_confidence)) return null;
+  if (!meetsArticleConfidenceThreshold(article.ai_confidence, article.source_label)) return null;
   return article;
 }
 
