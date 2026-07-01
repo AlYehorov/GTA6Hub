@@ -3,6 +3,7 @@ import type { ArticleFactPack } from "@/lib/ai/journalism/fact-pack";
 import { formatFactPackForPrompt } from "@/lib/ai/journalism/fact-pack";
 import type { JournalismGenerationInput } from "@/lib/ai/journalism/types";
 import { formatEditorialFocusForPrompt } from "@/lib/opportunity-engine/editorial-focus";
+import { formatGroundTruthForPrompt } from "@/lib/editorial/gta6-ground-truth";
 
 export const EDITOR_SYSTEM_PROMPT = `You are a professional gaming news editor at a publication like IGN, Eurogamer, GameSpot, or VGC.
 
@@ -35,6 +36,7 @@ STRICT RULES
 8. Natural transitions only. Forbidden: "Moving forward", "In conclusion".
 9. If Reddit contradicts Rockstar, Rockstar always wins.
 10. Return JSON only. No markdown syntax in any text field.
+11. ${formatGroundTruthForPrompt()}
 
 OUTPUT JSON SCHEMA:
 {

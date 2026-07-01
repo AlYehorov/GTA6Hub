@@ -3,6 +3,7 @@ import { aiDraftService } from "@/lib/ai/ai-draft-service";
 import { articlePublishingService } from "@/lib/workflows/article-publishing-service";
 import { checkArticleDuplicate } from "@/lib/editorial/duplicate-check";
 import { meetsDraftConfidenceThreshold } from "@/lib/editorial/confidence";
+import { passesDraftFactualGuard } from "@/lib/ai/journalism/factual-guard";
 import { markOpportunityPublishedByDraftId } from "@/lib/opportunity-engine/queries";
 import { trackDraftApproved, trackDraftPublished } from "@/lib/analytics/track";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -57,6 +58,16 @@ export class AutoPublishService {
 
     if (!meetsDraftConfidenceThreshold(draft)) {
       return { published: false, skippedReason: "Below confidence threshold" };
+    }
+
+    const factual = passesDraftFactualGuard({
+      title: draft.title,
+      excerpt: draft.excerpt,
+      content: draft.content,
+      sourceLabel: draft.source_item.source_label,
+    });
+    if (!factual.passed) {
+      return { published: false, skippedReason: factual.reason ?? "Failed factual guard" };
     }
 
     const duplicate = await checkArticleDuplicate({

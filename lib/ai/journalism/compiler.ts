@@ -117,7 +117,8 @@ export function editorJsonToJournalismJson(
 
 export function compileJournalismArticle(
   json: JournalismArticleJson,
-  input: JournalismGenerationInput
+  input: JournalismGenerationInput,
+  options?: { confidenceCap?: number | null }
 ): JournalismDraftResult {
   const blocks = json.blocks ?? [];
   const compiledSections: string[] = [];
@@ -164,6 +165,12 @@ export function compileJournalismArticle(
 
   const badge = json.hero?.source_badge ?? mapSourceBadge(input.primarySourceLabel);
 
+  const rawConfidence = json.confidence ?? (input.primarySourceLabel === "official" ? 0.9 : 0.6);
+  const cappedConfidence =
+    options?.confidenceCap != null
+      ? Math.min(rawConfidence, options.confidenceCap)
+      : rawConfidence;
+
   return {
     title: json.hero?.headline?.trim() || json.seo?.title?.trim() || "GTA 6 Update",
     slug: json.seo?.slug?.trim() || slugifyTitle(json.hero?.headline ?? ""),
@@ -182,7 +189,7 @@ export function compileJournalismArticle(
     confirmed_facts: confirmedFacts,
     speculation_notes: speculationNotes,
     source_attribution: sourceAttribution,
-    confidence: clampConfidence(json.confidence, input.primarySourceLabel),
+    confidence: clampConfidence(cappedConfidence, input.primarySourceLabel),
     category: json.category?.trim() || "Analysis",
     tags: Array.isArray(json.tags) ? json.tags.filter(Boolean) : [],
     source_badge: badge,
@@ -193,14 +200,18 @@ export function compileJournalismArticle(
 export function compileEditorArticle(
   editor: EditorArticleJson,
   factPack: ArticleFactPack,
-  input: JournalismGenerationInput
+  input: JournalismGenerationInput,
+  options?: { confidenceCap?: number | null }
 ): JournalismDraftResult {
   const journalism = editorJsonToJournalismJson(editor, factPack, input);
   if (input.editorialFocus?.headline) {
     journalism.hero.headline = input.editorialFocus.headline;
     journalism.seo.title = input.editorialFocus.headline.slice(0, 60);
   }
-  return compileJournalismArticle(journalism, input);
+  if (options?.confidenceCap != null) {
+    journalism.confidence = Math.min(journalism.confidence ?? 0.6, options.confidenceCap);
+  }
+  return compileJournalismArticle(journalism, input, options);
 }
 
 function compileBlock(block: JournalismBlock): string {

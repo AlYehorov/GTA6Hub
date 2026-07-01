@@ -12,6 +12,12 @@ import {
   formatQualityFailures,
   runEditorQualityCheck,
 } from "@/lib/ai/journalism/quality";
+import {
+  formatFactualGuardFailures,
+  runFactualGuardCheck,
+  discussesNegativeSalesForReview,
+} from "@/lib/ai/journalism/factual-guard";
+import { runOpenAiFactualReview } from "@/lib/ai/journalism/factual-review";
 import type {
   EditorArticleJson,
   JournalismDraftResult,
@@ -30,7 +36,25 @@ import { SOURCE_PLATFORM_LABELS } from "@/lib/types/source";
 import { kgEntityHref } from "@/lib/knowledge-graph/types";
 import type { KgEntityKind } from "@/lib/knowledge-graph/types";
 
-const MAX_REWRITE_ATTEMPTS = 1;
+const MAX_REWRITE_ATTEMPTS = 2;
+
+function collectRewriteNotes(
+  qualityFailures: ReturnType<typeof runEditorQualityCheck>["failures"],
+  factualFailures: ReturnType<typeof runFactualGuardCheck>["failures"],
+  aiReviewIssues: string[]
+): string {
+  const blocks: string[] = [];
+  if (qualityFailures.length > 0) {
+    blocks.push(formatQualityFailures(qualityFailures));
+  }
+  if (factualFailures.length > 0) {
+    blocks.push(formatFactualGuardFailures(factualFailures));
+  }
+  if (aiReviewIssues.length > 0) {
+    blocks.push(aiReviewIssues.map((issue) => `- ${issue}`).join("\n"));
+  }
+  return blocks.filter(Boolean).join("\n");
+}
 
 function extractYoutubeId(url: string): string | undefined {
   const match = url.match(
@@ -183,6 +207,7 @@ export async function generateJournalismArticle(
   let totalUsage = { prompt_tokens: 0, completion_tokens: 0 };
   let rewriteCount = 0;
   let rewriteNotes: string | undefined;
+  let lastConfidenceCap: number | null = null;
 
   for (let attempt = 0; attempt <= MAX_REWRITE_ATTEMPTS; attempt++) {
     const { json, usage } = await callEditorModel(input, factPack, rewriteNotes);
@@ -191,8 +216,22 @@ export async function generateJournalismArticle(
       completion_tokens: totalUsage.completion_tokens + usage.completion_tokens,
     };
 
-    const report = runEditorQualityCheck(json, factPack);
-    if (report.passed) {
+    const qualityReport = runEditorQualityCheck(json, factPack);
+    const factualReport = runFactualGuardCheck(json, factPack);
+    let aiReviewIssues: string[] = [];
+
+    if (!factualReport.passed || discussesNegativeSalesForReview(JSON.stringify(json))) {
+      const aiReview = await runOpenAiFactualReview(json, factPack);
+      if (aiReview && !aiReview.passed) {
+        aiReviewIssues = aiReview.issues;
+        lastConfidenceCap = Math.min(lastConfidenceCap ?? 1, aiReview.suggestedConfidence);
+      }
+    }
+
+    const passed =
+      qualityReport.passed && factualReport.passed && aiReviewIssues.length === 0;
+
+    if (passed) {
       return {
         result: compileEditorArticle(json, factPack, input),
         usage: totalUsage,
@@ -200,16 +239,27 @@ export async function generateJournalismArticle(
       };
     }
 
+    lastConfidenceCap =
+      factualReport.confidenceCap != null
+        ? Math.min(lastConfidenceCap ?? 1, factualReport.confidenceCap)
+        : lastConfidenceCap;
+
     if (attempt >= MAX_REWRITE_ATTEMPTS) {
       return {
-        result: compileEditorArticle(json, factPack, input),
+        result: compileEditorArticle(json, factPack, input, {
+          confidenceCap: lastConfidenceCap,
+        }),
         usage: totalUsage,
         rewriteCount,
       };
     }
 
     rewriteCount += 1;
-    rewriteNotes = formatQualityFailures(report.failures);
+    rewriteNotes = collectRewriteNotes(
+      qualityReport.failures,
+      factualReport.failures,
+      aiReviewIssues
+    );
   }
 
   return {
