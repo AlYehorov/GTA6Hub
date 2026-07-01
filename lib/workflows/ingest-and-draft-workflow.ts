@@ -11,6 +11,7 @@ export interface WorkflowResult {
   skipped: number;
   draftsCreated: number;
   articlesPublished: number;
+  pendingDraftsExamined: number;
   errors: string[];
 }
 
@@ -26,6 +27,7 @@ export class IngestAndDraftWorkflow {
       skipped: 0,
       draftsCreated: 0,
       articlesPublished: 0,
+      pendingDraftsExamined: 0,
       errors: [],
     };
 
@@ -50,7 +52,13 @@ export class IngestAndDraftWorkflow {
 
     const backlog = await this.processUnprocessedSources();
     result.draftsCreated += backlog.draftsCreated;
+    result.articlesPublished += backlog.articlesPublished;
+    result.skipped += backlog.skipped;
     result.errors.push(...backlog.errors);
+
+    const pending = await autoPublishService.tryAutoPublishPendingBacklog();
+    result.articlesPublished += pending.published;
+    result.pendingDraftsExamined = pending.examined;
 
     return result;
   }
@@ -70,6 +78,7 @@ export class IngestAndDraftWorkflow {
       skipped: 0,
       draftsCreated: 0,
       articlesPublished: 0,
+      pendingDraftsExamined: 0,
       errors: [],
     };
 
@@ -96,6 +105,7 @@ export class IngestAndDraftWorkflow {
       skipped: 0,
       draftsCreated: 0,
       articlesPublished: 0,
+      pendingDraftsExamined: 0,
       errors: [],
     };
 

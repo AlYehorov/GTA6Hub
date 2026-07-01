@@ -37,6 +37,7 @@ async function handleIngest() {
     skipped: result.skipped,
     draftsCreated: result.draftsCreated,
     articlesPublished: result.articlesPublished,
+    pendingDraftsExamined: result.pendingDraftsExamined,
     errors: result.errors,
     aiProvider: process.env.OPENAI_API_KEY?.trim() ? "openai" : "mock",
     autoPublish: process.env.AUTO_PUBLISH_NEWS?.trim().toLowerCase() !== "false",

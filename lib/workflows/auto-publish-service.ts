@@ -5,6 +5,7 @@ import { checkArticleDuplicate } from "@/lib/editorial/duplicate-check";
 import { meetsDraftConfidenceThreshold } from "@/lib/editorial/confidence";
 import { markOpportunityPublishedByDraftId } from "@/lib/opportunity-engine/queries";
 import { trackDraftApproved, trackDraftPublished } from "@/lib/analytics/track";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
 export interface AutoPublishResult {
@@ -97,6 +98,29 @@ export class AutoPublishService {
         skippedReason: err instanceof Error ? err.message : "Auto-publish failed",
       };
     }
+  }
+
+  /** Publish eligible drafts left in pending (e.g. from Editor). */
+  async tryAutoPublishPendingBacklog(): Promise<{ published: number; examined: number }> {
+    if (!isAutoPublishEnabled() || !isSupabaseAdminConfigured()) {
+      return { published: 0, examined: 0 };
+    }
+
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("ai_drafts")
+      .select("id")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(20);
+
+    let published = 0;
+    for (const row of data ?? []) {
+      const result = await this.tryAutoPublish(row.id as string);
+      if (result.published) published++;
+    }
+
+    return { published, examined: data?.length ?? 0 };
   }
 }
 
